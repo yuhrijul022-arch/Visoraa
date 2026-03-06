@@ -11,15 +11,19 @@ declare global {
     }
 }
 
-// Generate unique event ID for deduplication with CAPI
+// Track fired events for the current active page view to prevent duplicates
+let currentActivePath = '';
+const firedEventsOnPath = new Set<string>();
+
 export function generateEventId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
 }
 
-// Initialize pixel (call once on app load)
+// Initialize pixel safely
 export function initPixel(): void {
     if (!PIXEL_ID || typeof window === 'undefined') return;
-    if (window.fbq) return; // Already initialized
+
+    if (window.fbq) return;
 
     /* eslint-disable */
     (function (f: any, b: any, e: any, v: any) {
@@ -36,19 +40,37 @@ export function initPixel(): void {
     window.fbq('init', PIXEL_ID);
 }
 
-// Track standard events
+// Guard to prevent duplicate firing per route sequence
+function checkAndSetFired(eventName: string): boolean {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+
+    // If the path changed since the last check, reset the tracking set
+    if (currentPath !== currentActivePath) {
+        currentActivePath = currentPath;
+        firedEventsOnPath.clear();
+    }
+
+    if (firedEventsOnPath.has(eventName)) return true;
+    firedEventsOnPath.add(eventName);
+    return false;
+}
+
 export function trackPageView(): void {
     if (!window.fbq || !PIXEL_ID) return;
+    // fbq automatically deduplicates PageView internally, but we can double check
+    if (checkAndSetFired('PageView')) return;
     window.fbq('track', 'PageView');
 }
 
 export function trackViewContent(data?: Record<string, any>): void {
     if (!window.fbq || !PIXEL_ID) return;
+    if (checkAndSetFired('ViewContent')) return;
     window.fbq('track', 'ViewContent', data || {});
 }
 
 export function trackInitiateCheckout(eventId?: string): void {
     if (!window.fbq || !PIXEL_ID) return;
+    if (checkAndSetFired('InitiateCheckout')) return;
     window.fbq('track', 'InitiateCheckout', {}, { eventID: eventId || generateEventId() });
 }
 
@@ -68,8 +90,8 @@ export function trackPurchase(eventId: string, value: number): void {
     }, { eventID: eventId });
 }
 
-// Get fbp and fbc cookies for CAPI
 export function getFbpFbc(): { fbp: string | null; fbc: string | null } {
+    if (typeof document === 'undefined') return { fbp: null, fbc: null };
     const cookies = document.cookie.split(';').reduce((acc, c) => {
         const [key, val] = c.trim().split('=');
         if (key) acc[key] = val || '';
