@@ -1,0 +1,444 @@
+import React, { useState } from 'react';
+import { DesignInputs, FileData, LayoutBlueprint, StyleProfile, AppUser } from './types';
+import { generateViaAPI } from './src/lib/generateService';
+import { useCredits } from './src/lib/credits';
+import BottomControlBar from './components/BottomControlBar';
+import ResultDisplay from './components/ResultDisplay';
+import { ProfileMenu } from './src/components/ProfileMenu';
+import { TopUpModal } from './src/components/TopUpModal';
+import { useToast } from './src/components/ui/ToastProvider';
+import { Loader2, AlertCircle, Settings2, Box, Type, Code, X, Zap, Sparkles } from 'lucide-react';
+
+const INITIAL_INPUTS: DesignInputs = {
+  brandName: "",
+  headline: "",
+  benefit: "",
+  price: "",
+  cta: "",
+  ratio: "1:1",
+  matchStrength: 50,
+  customPrompt: "",
+  textMode: "on",
+  quantity: 1,
+  mode: "standard",
+};
+
+interface AppProps {
+  user: AppUser;
+}
+
+export default function App({ user }: AppProps) {
+  const [step, setStep] = useState<'upload' | 'analyzing' | 'preview' | 'generating' | 'done'>('upload');
+  const [inputs, setInputs] = useState<DesignInputs>(INITIAL_INPUTS);
+  const [productImage, setProductImage] = useState<FileData | null>(null);
+  const [refImage, setRefImage] = useState<FileData | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
+
+  const [blueprint, setBlueprint] = useState<LayoutBlueprint | null>(null);
+  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showJson, setShowJson] = useState(false);
+
+  const creditState = useCredits(user.uid);
+  const { toast } = useToast();
+
+  const isLocked = step === 'analyzing' || step === 'generating';
+
+  const creditCost = inputs.mode === 'pro' ? 2 : 1;
+  const totalCost = (inputs.quantity || 1) * creditCost;
+
+  const handleAnalyze = async () => {
+    if (!productImage) return;
+
+    // Credit check
+    if (creditState.credits < totalCost) {
+      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo: ${creditState.credits}.` });
+      setShowTopUp(true);
+      return;
+    }
+
+    setStep('analyzing');
+    setError(null);
+    // For the planning phase, we skip server-side call—use a simple timeout to simulate
+    // In production, planning is done server-side within the generate call
+    setTimeout(() => {
+      setBlueprint({
+        canvas: { ratio: inputs.ratio, safe_margin_percent: 10 },
+        product_placement: { anchor: "center", scale_percent: 65, y_offset_percent: 0, shadow: "soft", cutout_needed: true },
+        text_mode: inputs.textMode === 'off' ? 'OFF' : 'ON',
+        output_language: "id",
+        text_zones: {
+          headline: { x: 50, y: 15, w: 80, h: 20, align: "center", enabled: true },
+          benefit: { x: 50, y: 85, w: 60, h: 10, align: "center", enabled: true },
+          price: { x: 80, y: 80, w: 20, h: 10, align: "right", enabled: true },
+          cta: { x: 50, y: 90, w: 40, h: 8, align: "center", enabled: true },
+        },
+        style: { typography_mood: "modern_minimal", background_style: "clean_studio" },
+        elements: { badge: { enabled: false }, shapes: { enabled: false }, frame: { enabled: false } },
+        copy_policy: { keep_short: true, avoid_claims: true },
+        product_category: "general",
+      });
+      setStyleProfile(null);
+      setStep('preview');
+    }, 1500);
+  };
+
+  const handleGenerate = async () => {
+    if (!productImage || !blueprint) return;
+
+    if (creditState.credits < totalCost) {
+      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo: ${creditState.credits}.` });
+      setShowTopUp(true);
+      return;
+    }
+
+    setStep('generating');
+    setError(null);
+    try {
+      const result = await generateViaAPI(productImage, refImage, inputs, blueprint, styleProfile);
+
+      if (result.status === 'FAILED') {
+        throw new Error(result.error || 'Generation failed');
+      }
+
+      const urls = result.outputs.map(o => o.downloadUrl);
+      if (urls.length > 0) {
+        setImageUrls(urls);
+        setStep('done');
+        creditState.refresh();
+      } else {
+        throw new Error("No images generated");
+      }
+    } catch (e: any) {
+      console.error(e);
+      const msg = e.message || 'Generation failed';
+      if (msg.includes('INSUFFICIENT_CREDITS')) {
+        setError('Credit tidak cukup. Silakan top up.');
+        setShowTopUp(true);
+      } else if (msg.includes('RATE_LIMITED')) {
+        setError(msg.replace('RATE_LIMITED: ', ''));
+      } else {
+        setError(msg);
+      }
+      setStep('preview');
+    }
+  };
+
+  const handleReset = () => {
+    setStep('upload');
+    setProductImage(null);
+    setRefImage(null);
+    setInputs(INITIAL_INPUTS);
+    setBlueprint(null);
+    setStyleProfile(null);
+    setImageUrls([]);
+    setError(null);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    if (isLocked) return;
+    const { name, value } = e.target;
+    setInputs(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <div className="h-screen w-screen bg-black text-white font-sans selection:bg-blue-500/30 overflow-hidden flex flex-col relative">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(30,30,40,0.4),rgba(0,0,0,1))] -z-10 pointer-events-none" />
+
+      <main className="flex-1 overflow-y-auto relative scrollbar-hide">
+        {/* Header */}
+        <div className="p-6 md:p-8 flex justify-between items-center pointer-events-none sticky top-0 z-10 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-[2px]">
+          <div className="flex items-center gap-3 pointer-events-auto select-none">
+            <svg width="34" height="24" viewBox="0 0 34 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+              <path d="M0 0H8V24H0V0Z" fill="currentColor" />
+              <path d="M12 0H22C28.6274 0 34 5.37258 34 12C34 18.6274 28.6274 24 22 24H12V0Z" fill="currentColor" />
+            </svg>
+            <span className="font-normal text-2xl tracking-tight text-white">Visora</span>
+          </div>
+
+          <div className="flex items-center gap-3 pointer-events-auto">
+            {step !== 'upload' && step !== 'done' && (
+              <button onClick={handleReset} className="text-xs font-medium text-gray-500 hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                Reset
+              </button>
+            )}
+            <ProfileMenu user={user} credits={creditState.credits} onTopUp={() => setShowTopUp(true)} />
+          </div>
+        </div>
+
+        {/* Central Display */}
+        <div className="flex flex-col items-center justify-center p-4 min-h-[60vh]">
+
+          {error && (
+            <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-sm" style={{ animation: 'fadeInDown 0.3s ease-out' }}>
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+
+          {step === 'upload' && (
+            <div className="text-center space-y-4 max-w-md mt-12" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+              <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 tracking-tight">
+                Design Intelligence
+              </h1>
+              <p className="text-gray-400 text-lg">
+                Upload your product below. We'll handle the rest.
+              </p>
+              {/* Mode Selector */}
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setInputs(prev => ({ ...prev, mode: 'standard' }))}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                    }`}
+                >
+                  <Zap size={14} /> Standard <span className="text-[10px] opacity-60">(1 credit)</span>
+                </button>
+                <button
+                  onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                    }`}
+                >
+                  <Sparkles size={14} /> Pro <span className="text-[10px] opacity-60">(2 credits)</span>
+                </button>
+              </div>
+              <div className="text-[11px] text-gray-600">
+                {creditState.credits} credits available • Cost: {totalCost} credit{totalCost > 1 ? 's' : ''}
+              </div>
+            </div>
+          )}
+
+          {(step === 'analyzing' || step === 'generating') && (
+            <div className="flex flex-col items-center gap-4" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 animate-pulse" />
+                <Loader2 size={48} className="text-blue-500 animate-spin relative z-10" />
+              </div>
+              <p className="text-gray-400 font-medium animate-pulse">
+                {step === 'analyzing' ? 'Analyzing product & planning composition...' : 'Rendering high-fidelity variations...'}
+              </p>
+            </div>
+          )}
+
+          {step === 'preview' && blueprint && (
+            <div className="w-full max-w-2xl bg-[#111] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl" style={{ animation: 'fadeInUp 0.5s ease-out' }}>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Blueprint Ready</h2>
+                  <p className="text-gray-400 text-sm">AI has planned the composition. Ready to render.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-mono border ${inputs.mode === 'pro' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+                    {inputs.mode === 'pro' ? 'PRO MODE' : 'STANDARD'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Layout</div>
+                  <div className="text-sm font-semibold text-white">{blueprint.product_placement.anchor} Anchor</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Style</div>
+                  <div className="text-sm font-semibold text-white truncate">{styleProfile?.typography_mood || 'Modern'}</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Ratio</div>
+                  <div className="text-sm font-semibold text-white">{inputs.ratio}</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Cost</div>
+                  <div className="text-sm font-semibold text-white">{totalCost} credit{totalCost > 1 ? 's' : ''}</div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors"
+                >
+                  Adjust Inputs
+                </button>
+                <button
+                  onClick={handleGenerate}
+                  className="flex-[2] py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  Generate Images
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'done' && imageUrls.length > 0 && (
+            <div className="pb-32 w-full max-w-6xl mx-auto">
+              <ResultDisplay
+                imageUrls={imageUrls}
+                blueprint={blueprint}
+                styleProfile={styleProfile}
+                onReset={handleReset}
+                onDownload={() => { }}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Bottom Control Bar */}
+      {step !== 'done' && (
+        <BottomControlBar
+          step={step}
+          inputs={inputs}
+          setInputs={setInputs}
+          productImage={productImage}
+          setProductImage={setProductImage}
+          refImage={refImage}
+          setRefImage={setRefImage}
+          onAnalyze={handleAnalyze}
+          onGenerate={handleGenerate}
+          isLocked={isLocked}
+          onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
+          <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
+
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Settings2 size={18} className="text-blue-500" /> Studio Settings
+              </h3>
+              <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <Box size={14} /> Output Specs
+                  </h4>
+
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">Aspect Ratio</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {['1:1', '4:5', '9:16', '16:9'].map(r => (
+                        <button key={r} onClick={() => setInputs(prev => ({ ...prev, ratio: r as any }))}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${inputs.ratio === r ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-400 mb-2 block flex justify-between">
+                      <span>Style Fidelity</span>
+                      <span className="text-blue-400">{inputs.matchStrength}%</span>
+                    </label>
+                    <input type="range" min="0" max="100" value={inputs.matchStrength} onChange={(e) => setInputs(prev => ({ ...prev, matchStrength: parseInt(e.target.value) }))}
+                      className="w-full accent-blue-500 h-1 bg-gray-800 rounded-full appearance-none cursor-pointer" />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">Variations</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4].map(q => (
+                        <button key={q} onClick={() => setInputs(prev => ({ ...prev, quantity: q }))}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all ${inputs.quantity === q ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mode Selector in Settings */}
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">AI Model</label>
+                    <div className="flex gap-2">
+                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'standard' }))}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                        <Zap size={10} /> Standard
+                      </button>
+                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                        <Sparkles size={10} /> Pro
+                      </button>
+                    </div>
+                    <div className="text-[9px] text-gray-600 mt-1">
+                      {inputs.mode === 'pro' ? '2 credits per image • Higher quality' : '1 credit per image • Fast generation'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                      <Type size={14} /> Text & Copy
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        {inputs.textMode === 'off' ? 'Disabled' : 'Enabled'}
+                      </span>
+                      <button
+                        onClick={() => setInputs(prev => ({ ...prev, textMode: prev.textMode === 'off' ? 'on' : 'off' }))}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${inputs.textMode !== 'off' ? 'bg-blue-600' : 'bg-gray-700'}`}
+                      >
+                        <span className={`${inputs.textMode !== 'off' ? 'translate-x-4' : 'translate-x-1'} inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={`space-y-3 transition-all duration-300 ${inputs.textMode === 'off' ? 'opacity-40 blur-[1px] pointer-events-none grayscale select-none' : ''}`}>
+                    <input name="brandName" disabled={inputs.textMode === 'off'} value={inputs.brandName} onChange={handleInputChange} placeholder="Brand Name" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
+                    <input name="headline" disabled={inputs.textMode === 'off'} value={inputs.headline} onChange={handleInputChange} placeholder="Headline" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
+                    <div className="flex gap-2">
+                      <input name="price" disabled={inputs.textMode === 'off'} value={inputs.price} onChange={handleInputChange} placeholder="Price" className="w-1/3 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
+                      <input name="cta" disabled={inputs.textMode === 'off'} value={inputs.cta} onChange={handleInputChange} placeholder="CTA" className="w-2/3 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {(blueprint || styleProfile) && (
+                <div className="border-t border-white/5 pt-6">
+                  <button
+                    onClick={() => setShowJson(!showJson)}
+                    className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors mb-4"
+                  >
+                    <Code size={14} /> Blueprint Logic
+                  </button>
+
+                  {showJson && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ animation: 'fadeIn 0.2s ease-out' }}>
+                      <div className="bg-black/50 p-4 rounded-xl border border-white/5 overflow-auto max-h-48 scrollbar-hide">
+                        <div className="text-[10px] text-blue-400 font-bold mb-2">STYLE DNA</div>
+                        <pre className="text-[10px] text-gray-500 font-mono whitespace-pre-wrap">{JSON.stringify(styleProfile, null, 2)}</pre>
+                      </div>
+                      <div className="bg-black/50 p-4 rounded-xl border border-white/5 overflow-auto max-h-48 scrollbar-hide">
+                        <div className="text-[10px] text-blue-400 font-bold mb-2">LAYOUT STRUCTURE</div>
+                        <pre className="text-[10px] text-gray-500 font-mono whitespace-pre-wrap">{JSON.stringify(blueprint, null, 2)}</pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Up Modal */}
+      <TopUpModal isOpen={showTopUp} onClose={() => setShowTopUp(false)} onSuccess={() => creditState.startFastPolling()} />
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
+    </div>
+  );
+}
