@@ -32,10 +32,13 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
     useEffect(() => {
         if (!isOpen) return;
         const isProd = import.meta.env.VITE_MIDTRANS_IS_PROD === 'true';
+        const clientKey = isProd
+            ? (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_PROD || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '')
+            : (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_SANDBOX || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
         if (document.querySelector('script[src*="snap.js"]')) return;
         const script = document.createElement('script');
         script.src = isProd ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
-        script.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+        script.setAttribute('data-client-key', clientKey);
         script.async = true;
         document.head.appendChild(script);
     }, [isOpen]);
@@ -134,8 +137,8 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                                 key={i}
                                 onClick={() => setSelectedPkg(i)}
                                 className={`relative p-4 rounded-2xl border transition-all text-left overflow-hidden ${selectedPkg === i
-                                        ? 'border-blue-500 bg-blue-500/10'
-                                        : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
+                                    ? 'border-blue-500 bg-blue-500/10'
+                                    : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
                                     }`}
                             >
                                 <div className="text-2xl font-semibold text-white tracking-tight">{pkg.credits}</div>
@@ -153,8 +156,8 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                     <div
                         onClick={() => setSelectedPkg('custom')}
                         className={`p-4 rounded-2xl border transition-all ${selectedPkg === 'custom'
-                                ? 'border-blue-500 bg-blue-500/10'
-                                : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
                             }`}
                     >
                         <div className="flex items-center justify-between mb-2">

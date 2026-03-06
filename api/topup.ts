@@ -5,9 +5,13 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL ||
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-const midtransServerKey = process.env.MIDTRANS_SERVER_KEY!;
-const midtransClientKey = process.env.MIDTRANS_CLIENT_KEY!;
 const midtransIsProd = process.env.MIDTRANS_IS_PROD === 'true';
+const midtransServerKey = midtransIsProd
+    ? (process.env.MIDTRANS_SERVER_KEY_PROD || process.env.MIDTRANS_SERVER_KEY!)
+    : (process.env.MIDTRANS_SERVER_KEY_SANDBOX || process.env.MIDTRANS_SERVER_KEY!);
+const midtransClientKey = midtransIsProd
+    ? (process.env.MIDTRANS_CLIENT_KEY_PROD || process.env.MIDTRANS_CLIENT_KEY!)
+    : (process.env.MIDTRANS_CLIENT_KEY_SANDBOX || process.env.MIDTRANS_CLIENT_KEY!);
 
 const CREDIT_PRICE = 5000; // 1 credit = Rp5.000
 

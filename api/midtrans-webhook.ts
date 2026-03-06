@@ -6,7 +6,10 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL ||
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-const midtransServerKey = process.env.MIDTRANS_SERVER_KEY!;
+const midtransIsProd = process.env.MIDTRANS_IS_PROD === 'true';
+const midtransServerKey = midtransIsProd
+    ? (process.env.MIDTRANS_SERVER_KEY_PROD || process.env.MIDTRANS_SERVER_KEY!)
+    : (process.env.MIDTRANS_SERVER_KEY_SANDBOX || process.env.MIDTRANS_SERVER_KEY!);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') return res.status(200).send('OK');
@@ -75,7 +78,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { data: newTx } = await supabase.from('transactions').insert({
                 app, order_id: rawOrderId, type,
                 amount: parseInt(grossInt, 10),
-                email: 'unknown@webhook.com', credits: 0,
+                email: notification.customer_details?.email || 'unknown@webhook.com',
+                // SIGNUP wajib 25 credit, jangan kasih 0
+                credits: type === 'SIGNUP' ? 25 : 0,
                 status: 'pending', raw_notification: notification,
             } as any).select().single();
             if (!newTx) return res.status(200).send('OK');
@@ -101,6 +106,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             let userId = (txData as any).user_id;
             let creditsToAdd = (txData as any).credits || 0;
+
+            // PENGAMAN: Jika ini pendaftaran baru (SIGNUP) dan credit masih 0, paksa jadi 25
+            if (type === 'SIGNUP' && creditsToAdd === 0) {
+                creditsToAdd = 25;
+                console.warn('Webhook: SIGNUP credit was 0, forced to 25 for', rawOrderId);
+            }
 
             // Fallback user resolution
             if (!userId) {

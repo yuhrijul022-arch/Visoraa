@@ -28,10 +28,13 @@ export const BillingPage: React.FC = () => {
 
     useEffect(() => {
         const isProd = import.meta.env.VITE_MIDTRANS_IS_PROD === 'true';
+        const clientKey = isProd
+            ? (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_PROD || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '')
+            : (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_SANDBOX || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
         if (document.querySelector('script[src*="snap.js"]')) return;
         const script = document.createElement('script');
         script.src = isProd ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
-        script.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+        script.setAttribute('data-client-key', clientKey);
         script.async = true;
         document.head.appendChild(script);
     }, []);
