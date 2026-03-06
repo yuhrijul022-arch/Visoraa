@@ -24,7 +24,11 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
             setLoading(false);
         }).catch(() => setLoading(false));
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                window.location.href = '/';
+                return;
+            }
             if (session?.user) {
                 setUser(toAppUser(session.user));
                 ensureUserRow(session.user).catch(console.error);
