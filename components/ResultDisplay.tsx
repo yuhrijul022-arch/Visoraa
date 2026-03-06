@@ -53,6 +53,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 }) => {
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
     const [downloading, setDownloading] = useState<number | 'all' | null>(null);
+    const [activeCard, setActiveCard] = useState<number | null>(null);
 
     const handleSingleDownload = async (url: string, index: number) => {
         setDownloading(index);
@@ -64,6 +65,10 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         setDownloading('all');
         await downloadAll(imageUrls);
         setDownloading(null);
+    };
+
+    const handleCardTap = (idx: number) => {
+        setActiveCard(prev => prev === idx ? null : idx);
     };
 
     return (
@@ -91,24 +96,28 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
             {/* Gallery Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {imageUrls.map((img, idx) => (
-                    <div key={idx} className="group relative aspect-square bg-[#111] rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:border-blue-500/50 transition-all duration-300">
+                    <div
+                        key={idx}
+                        className="group relative aspect-square bg-[#111] rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:border-blue-500/50 transition-all duration-300 cursor-pointer"
+                        onClick={() => handleCardTap(idx)}
+                    >
                         <img
                             src={img}
                             alt={`Result ${idx + 1}`}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
 
-                        {/* Overlay Actions */}
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity flex items-center justify-center gap-2 flex-row md:flex-col md:gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2">
+                        {/* Overlay Actions - hidden by default, show on hover (PC) or tap (mobile) */}
+                        <div className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 flex items-center justify-center gap-2 flex-row md:flex-col md:gap-3 p-2 ${activeCard === idx ? 'opacity-100' : 'opacity-0'} md:opacity-0 md:group-hover:opacity-100`}>
                             <button
-                                onClick={() => setLightboxSrc(img)}
+                                onClick={(e) => { e.stopPropagation(); setLightboxSrc(img); }}
                                 className="p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 hover:scale-110 transition-all"
                             >
                                 <ZoomIn size={18} className="md:hidden" />
                                 <ZoomIn size={20} className="hidden md:block" />
                             </button>
                             <button
-                                onClick={() => handleSingleDownload(img, idx)}
+                                onClick={(e) => { e.stopPropagation(); handleSingleDownload(img, idx); }}
                                 disabled={downloading === idx}
                                 className="px-3 py-1.5 md:px-4 md:py-2 bg-white text-black font-semibold text-[11px] md:text-xs rounded-full hover:bg-gray-200 transition-all flex items-center gap-1.5 md:gap-2 disabled:opacity-50"
                             >
