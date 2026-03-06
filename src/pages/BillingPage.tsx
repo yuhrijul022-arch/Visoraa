@@ -26,6 +26,27 @@ export const BillingPage: React.FC = () => {
             .then(({ data }) => setTransactions(data || []));
     }, [user?.id]);
 
+    useEffect(() => {
+        const isProd = import.meta.env.VITE_MIDTRANS_IS_PROD === 'true';
+        if (document.querySelector('script[src*="snap.js"]')) return;
+        const script = document.createElement('script');
+        script.src = isProd ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+        script.async = true;
+        document.head.appendChild(script);
+    }, []);
+
+    const handlePayNow = (snapToken: string) => {
+        if (window.snap) {
+            window.snap.pay(snapToken, {
+                onSuccess: () => { window.location.reload(); },
+                onPending: () => { window.location.reload(); },
+                onError: () => { window.location.reload(); },
+                onClose: () => { },
+            });
+        }
+    };
+
     const statusColor: Record<string, string> = {
         success: 'text-green-400 bg-green-500/10',
         pending: 'text-yellow-400 bg-yellow-500/10',
@@ -74,11 +95,23 @@ export const BillingPage: React.FC = () => {
                                         {new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-sm font-semibold text-white">{formatRupiah(tx.amount)}</div>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[tx.status] || statusColor.expired}`}>
-                                        {tx.status?.toUpperCase()}
-                                    </span>
+                                <div className="text-right flex flex-col items-end gap-2">
+                                    <div>
+                                        <div className="text-sm font-semibold text-white">{formatRupiah(tx.amount)}</div>
+                                        <div className="mt-1 text-right">
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[tx.status] || statusColor.expired}`}>
+                                                {tx.status?.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {tx.status === 'pending' && tx.snap_token && (
+                                        <button
+                                            onClick={() => handlePayNow(tx.snap_token)}
+                                            className="px-4 py-1.5 bg-white text-black text-xs font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all shadow-lg"
+                                        >
+                                            Bayar Sekarang
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
