@@ -68,3 +68,16 @@ export async function generateViaAPI(
 
     return await response.json();
 }
+
+export async function fetchRecentGenerations(uid: string): Promise<string[]> {
+    const { data, error } = await supabase
+        .from('generation_logs')
+        .select('image_urls')
+        .eq('user_id', uid)
+        .eq('status', 'success')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    if (error || !data?.[0]) return [];
+    return (data[0] as any).image_urls || [];
+}

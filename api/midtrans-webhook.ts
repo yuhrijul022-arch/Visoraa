@@ -32,12 +32,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log('Webhook received:', { orderId: rawOrderId, status: transactionStatus });
 
-        // 1. Verify signature
-        const grossAmountStr = String(grossAmountRaw);
-        const stringToSign = `${rawOrderId}${statusCode}${grossAmountStr}${midtransServerKey}`;
-        const expectedSignature = createHash('sha512').update(stringToSign).digest('hex');
-        if (signatureKey !== expectedSignature) {
-            console.error('Webhook: signature mismatch');
+        // 1. Verify signature — Midtrans sends gross_amount as "5000.00" or "5000"
+        // We try BOTH formats to handle any inconsistency
+        const grossRaw = String(grossAmountRaw);
+        const grossInt = Math.floor(Number(grossAmountRaw)).toString();
+
+        const makeSignature = (amount: string) => {
+            const str = `${rawOrderId}${statusCode}${amount}${midtransServerKey}`;
+            return createHash('sha512').update(str).digest('hex');
+        };
+
+        const sigWithRaw = makeSignature(grossRaw);
+        const sigWithInt = makeSignature(grossInt);
+
+        if (signatureKey !== sigWithRaw && signatureKey !== sigWithInt) {
+            console.error('Webhook: signature mismatch', {
+                orderId: rawOrderId,
+                grossRaw,
+                grossInt,
+                statusCode,
+                receivedSig: signatureKey?.substring(0, 20) + '...',
+                expectedRaw: sigWithRaw.substring(0, 20) + '...',
+                expectedInt: sigWithInt.substring(0, 20) + '...',
+            });
             return res.status(401).send('Unauthorized');
         }
 

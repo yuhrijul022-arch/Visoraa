@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DesignInputs, FileData, LayoutBlueprint, StyleProfile, AppUser } from './types';
-import { generateViaAPI } from './src/lib/generateService';
+import { generateViaAPI, fetchRecentGenerations } from './src/lib/generateService';
 import { useCredits } from './src/lib/credits';
 import BottomControlBar from './components/BottomControlBar';
 import ResultDisplay from './components/ResultDisplay';
@@ -28,8 +28,22 @@ interface AppProps {
 }
 
 export default function App({ user }: AppProps) {
-  const [step, setStep] = useState<'upload' | 'analyzing' | 'preview' | 'generating' | 'done'>('upload');
-  const [inputs, setInputs] = useState<DesignInputs>(INITIAL_INPUTS);
+  // Restore step from localStorage (only 'upload' or 'done' are safe to restore)
+  const [step, setStep] = useState<'upload' | 'analyzing' | 'preview' | 'generating' | 'done'>(() => {
+    const saved = localStorage.getItem('visora_last_step');
+    if (saved === 'done') return 'done';
+    return 'upload';
+  });
+
+  // Restore inputs (settings + prompt) from localStorage
+  const [inputs, setInputs] = useState<DesignInputs>(() => {
+    try {
+      const saved = localStorage.getItem('visora_studio_settings');
+      if (saved) return { ...INITIAL_INPUTS, ...JSON.parse(saved) };
+    } catch { /* ignore corrupt data */ }
+    return INITIAL_INPUTS;
+  });
+
   const [productImage, setProductImage] = useState<FileData | null>(null);
   const [refImage, setRefImage] = useState<FileData | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -37,9 +51,47 @@ export default function App({ user }: AppProps) {
 
   const [blueprint, setBlueprint] = useState<LayoutBlueprint | null>(null);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+
+  // Restore image URLs from localStorage
+  const [imageUrls, setImageUrls] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('visora_image_urls');
+      if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return [];
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
+
+  // Auto-save inputs to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem('visora_studio_settings', JSON.stringify(inputs));
+  }, [inputs]);
+
+  // Auto-save step to localStorage
+  useEffect(() => {
+    localStorage.setItem('visora_last_step', step);
+  }, [step]);
+
+  // Auto-save image URLs to localStorage
+  useEffect(() => {
+    localStorage.setItem('visora_image_urls', JSON.stringify(imageUrls));
+  }, [imageUrls]);
+
+  // Restore images from Supabase if step=done but no URLs in localStorage
+  useEffect(() => {
+    if (step === 'done' && imageUrls.length === 0 && user?.uid) {
+      fetchRecentGenerations(user.uid).then(urls => {
+        if (urls.length > 0) {
+          setImageUrls(urls);
+        } else {
+          // No images found, go back to upload
+          setStep('upload');
+        }
+      });
+    }
+  }, []);
 
   const creditState = useCredits(user.uid);
   const { toast } = useToast();
@@ -135,6 +187,10 @@ export default function App({ user }: AppProps) {
     setStyleProfile(null);
     setImageUrls([]);
     setError(null);
+    // Clear persisted state
+    localStorage.removeItem('visora_last_step');
+    localStorage.removeItem('visora_image_urls');
+    localStorage.removeItem('visora_studio_settings');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

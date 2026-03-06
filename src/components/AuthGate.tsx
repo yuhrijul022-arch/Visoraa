@@ -8,21 +8,36 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
     const [user, setUser] = useState<AppUser | null>(null);
     const [authLoading, setAuthLoading] = useState(true);
     const [isPro, setIsPro] = useState<boolean | null>(null);
+    const [proChecked, setProChecked] = useState(false);
     const [authProvider, setAuthProvider] = useState<string | null>(null);
     const initialized = useRef(false);
 
     const checkProStatus = async (uid: string) => {
         try {
-            const { data } = await supabase.from('users').select('pro_active').eq('id', uid).single();
-            setIsPro((data as any)?.pro_active ?? false);
+            const { data, error } = await supabase.from('users').select('pro_active').eq('id', uid).single();
+            if (error) {
+                console.warn('checkProStatus error (might be RLS or no row):', error.message);
+                // If the user row doesn't exist yet (new signup), treat as not pro
+                setIsPro(false);
+            } else {
+                setIsPro((data as any)?.pro_active ?? false);
+            }
         } catch {
             setIsPro(false);
+        } finally {
+            setProChecked(true);
         }
     };
 
     useEffect(() => {
         if (initialized.current) return;
         initialized.current = true;
+
+        // Safety timeout — if auth takes > 8s, stop loading
+        const timeout = setTimeout(() => {
+            setAuthLoading(false);
+            setProChecked(true);
+        }, 8000);
 
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
@@ -33,10 +48,16 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
                     checkProStatus(session.user.id);
                 } else {
                     setIsPro(true); // Google auth → masuk langsung
+                    setProChecked(true);
                 }
                 ensureUserRow(session.user).catch(console.error);
+            } else {
+                setProChecked(true);
             }
             setAuthLoading(false);
+        }).catch(() => {
+            setAuthLoading(false);
+            setProChecked(true);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -48,19 +69,25 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
                     await checkProStatus(session.user.id);
                 } else {
                     setIsPro(true);
+                    setProChecked(true);
                 }
                 ensureUserRow(session.user).catch(console.error);
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
                 setIsPro(null);
+                setProChecked(false);
                 setAuthProvider(null);
             }
             setAuthLoading(false);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            clearTimeout(timeout);
+            subscription.unsubscribe();
+        };
     }, []);
 
+    // Still loading auth session
     if (authLoading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -69,20 +96,39 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
         );
     }
 
+    // Not logged in
     if (!user) {
         return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }} loading={false} />;
     }
 
-    // Email users must have pro_active to enter
-    if (authProvider === 'email' && isPro === false) {
+    // Email user: still checking pro status
+    if (authProvider === 'email' && !proChecked) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // Email user: NOT pro (payment needed or pending)
+    if (authProvider === 'email' && isPro !== true) {
         return <WaitingForPayment email={user.email || ''} onRefresh={() => checkProStatus(user.uid)} />;
     }
 
+    // All good — render app
     return <>{children(user)}</>;
 };
 
 const WaitingForPayment: React.FC<{ email: string; onRefresh: () => void }> = ({ email, onRefresh }) => {
     const [checking, setChecking] = useState(false);
+
+    // Auto-poll every 5 seconds in case webhook processes payment
+    useEffect(() => {
+        const interval = setInterval(() => {
+            onRefresh();
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [onRefresh]);
 
     const handleCheck = async () => {
         setChecking(true);

@@ -1,8 +1,12 @@
 -- ================================================
--- Visora Database Schema (Supabase)
+-- Visora Database Schema (Supabase) — COMPLETE
+-- Jalankan 1x di SQL Editor Supabase Dashboard
 -- ================================================
 
--- Users table
+-- ================================================
+-- 1. TABLES
+-- ================================================
+
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     app TEXT DEFAULT 'VIS',
@@ -13,12 +17,11 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Transactions table
 CREATE TABLE IF NOT EXISTS public.transactions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     app TEXT DEFAULT 'VIS',
     order_id TEXT UNIQUE NOT NULL,
-    type TEXT NOT NULL, -- SIGNUP, TOPUP
+    type TEXT NOT NULL,
     user_id UUID REFERENCES public.users(id),
     email TEXT,
     username TEXT,
@@ -26,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     credits INTEGER DEFAULT 0,
     amount INTEGER DEFAULT 0,
     snap_token TEXT,
-    status TEXT DEFAULT 'pending', -- pending, success, failed, expired
+    status TEXT DEFAULT 'pending',
     credited BOOLEAN DEFAULT false,
     credited_at TIMESTAMP WITH TIME ZONE,
     payment_type TEXT,
@@ -34,20 +37,18 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Generation logs
 CREATE TABLE IF NOT EXISTS public.generation_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.users(id),
     prompt TEXT,
     model TEXT,
-    status TEXT DEFAULT 'pending', -- pending, success, partial, failed
+    status TEXT DEFAULT 'pending',
     credits_used INTEGER DEFAULT 0,
     refunded BOOLEAN DEFAULT false,
     image_urls TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Rate limits
 CREATE TABLE IF NOT EXISTS public.generation_rate_limits (
     user_id UUID PRIMARY KEY REFERENCES public.users(id),
     is_generating BOOLEAN DEFAULT false,
@@ -57,7 +58,6 @@ CREATE TABLE IF NOT EXISTS public.generation_rate_limits (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Processed notifications (idempotency)
 CREATE TABLE IF NOT EXISTS public.processed_notifications (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     order_id TEXT NOT NULL,
@@ -66,12 +66,11 @@ CREATE TABLE IF NOT EXISTS public.processed_notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Coupons
 CREATE TABLE IF NOT EXISTS public.coupons (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     code TEXT UNIQUE NOT NULL,
-    discount_type TEXT NOT NULL, -- percentage, fixed
-    discount_value INTEGER NOT NULL, -- percentage (0-100) or fixed rupiah amount
+    discount_type TEXT NOT NULL,
+    discount_value INTEGER NOT NULL,
     max_uses INTEGER,
     current_uses INTEGER DEFAULT 0,
     active BOOLEAN DEFAULT true,
@@ -79,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.coupons (
 );
 
 -- ================================================
--- RPC Functions
+-- 2. RPC FUNCTIONS
 -- ================================================
 
 CREATE OR REPLACE FUNCTION public.deduct_credits_safe(p_user_id UUID, p_amount INTEGER)
@@ -92,7 +91,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ================================================
--- RLS Policies
+-- 3. ENABLE RLS
 -- ================================================
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -102,19 +101,63 @@ ALTER TABLE public.generation_rate_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.processed_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
 
--- Users: users can read/update their own row
-CREATE POLICY "users_select_own" ON public.users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "users_update_own" ON public.users FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "users_insert_own" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+-- ================================================
+-- 4. DROP ALL OLD POLICIES (bersihkan dulu)
+-- ================================================
 
--- Transactions: users can read their own
-CREATE POLICY "transactions_select_own" ON public.transactions FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "users_select_own" ON public.users;
+DROP POLICY IF EXISTS "users_update_own" ON public.users;
+DROP POLICY IF EXISTS "users_insert_own" ON public.users;
+DROP POLICY IF EXISTS "Allow users to read their own profile" ON public.users;
+DROP POLICY IF EXISTS "Allow users to upsert their own profile" ON public.users;
+DROP POLICY IF EXISTS "transactions_select_own" ON public.transactions;
+DROP POLICY IF EXISTS "generation_logs_select_own" ON public.generation_logs;
+DROP POLICY IF EXISTS "coupons_select_active" ON public.coupons;
 
--- Generation logs: users can read their own
-CREATE POLICY "generation_logs_select_own" ON public.generation_logs FOR SELECT USING (auth.uid() = user_id);
+-- ================================================
+-- 5. CREATE FRESH POLICIES
+-- ================================================
 
--- Coupons: anyone can read active coupons
-CREATE POLICY "coupons_select_active" ON public.coupons FOR SELECT USING (active = true);
+-- Users: bisa SELECT row sendiri
+CREATE POLICY "users_select_own" ON public.users
+    FOR SELECT TO authenticated
+    USING (auth.uid() = id);
 
--- Enable realtime for users table
-ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
+-- Users: bisa UPDATE row sendiri
+CREATE POLICY "users_update_own" ON public.users
+    FOR UPDATE TO authenticated
+    USING (auth.uid() = id);
+
+-- Users: bisa INSERT row sendiri (untuk ensureUserRow saat pertama login)
+CREATE POLICY "users_insert_own" ON public.users
+    FOR INSERT TO authenticated
+    WITH CHECK (auth.uid() = id);
+
+-- Transactions: bisa SELECT transaksi sendiri
+CREATE POLICY "transactions_select_own" ON public.transactions
+    FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
+
+-- Generation logs: bisa SELECT log sendiri
+CREATE POLICY "generation_logs_select_own" ON public.generation_logs
+    FOR SELECT TO authenticated
+    USING (auth.uid() = user_id);
+
+-- Coupons: siapa saja bisa baca coupon aktif
+CREATE POLICY "coupons_select_active" ON public.coupons
+    FOR SELECT
+    USING (active = true);
+
+-- ================================================
+-- 6. REALTIME
+-- ================================================
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'users'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
+    END IF;
+END $$;
