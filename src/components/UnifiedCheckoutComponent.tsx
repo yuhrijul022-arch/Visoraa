@@ -99,6 +99,20 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         return () => { try { document.head.removeChild(script); } catch { } };
     }, []);
 
+    // ── Recovery: auto-login if payment was completed while away ──
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('visora_pending_email');
+        const savedPass = localStorage.getItem('visora_pending_pass');
+        if (savedEmail && savedPass) {
+            supabase.auth.signInWithPassword({ email: savedEmail, password: savedPass }).then(({ error }) => {
+                // Clear stored credentials regardless of outcome
+                localStorage.removeItem('visora_pending_email');
+                localStorage.removeItem('visora_pending_pass');
+                if (!error) window.location.href = '/';
+            });
+        }
+    }, []);
+
     const handleSubmit = async () => {
         if (!name || !email || !password) {
             toast({ type: 'warning', title: 'Lengkapi Form', description: 'Semua field wajib diisi.' });
@@ -121,17 +135,28 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                 setIsLoading(false);
                 return;
             }
+
+            // Save credentials temporarily for recovery if browser closes
+            localStorage.setItem('visora_pending_email', email);
+            localStorage.setItem('visora_pending_pass', password);
+
             const { snapToken } = result.data;
             if (window.snap) {
                 window.snap.pay(snapToken, {
                     onSuccess: async () => {
-                        // Auto-login after payment
                         const { error } = await supabase.auth.signInWithPassword({ email, password });
+                        localStorage.removeItem('visora_pending_email');
+                        localStorage.removeItem('visora_pending_pass');
                         if (!error) window.location.href = '/';
                         else window.location.href = '/success';
                     },
                     onPending: () => { window.location.href = '/pending'; },
-                    onError: () => { toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' }); setIsLoading(false); },
+                    onError: () => {
+                        localStorage.removeItem('visora_pending_email');
+                        localStorage.removeItem('visora_pending_pass');
+                        toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' });
+                        setIsLoading(false);
+                    },
                     onClose: () => { setIsLoading(false); },
                 });
             }

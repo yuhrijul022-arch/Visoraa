@@ -6,79 +6,32 @@ import { AppUser } from '../../types';
 
 export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AppUser | null>(null);
-    const [authLoading, setAuthLoading] = useState(true);
-    const [isPro, setIsPro] = useState<boolean | null>(null);
-    const [proChecked, setProChecked] = useState(false);
-    const [authProvider, setAuthProvider] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const initialized = useRef(false);
-
-    const checkProStatus = async (uid: string) => {
-        try {
-            const { data, error } = await supabase.from('users').select('pro_active').eq('id', uid).single();
-            if (error) {
-                console.warn('checkProStatus error (might be RLS or no row):', error.message);
-                // If the user row doesn't exist yet (new signup), treat as not pro
-                setIsPro(false);
-            } else {
-                setIsPro((data as any)?.pro_active ?? false);
-            }
-        } catch {
-            setIsPro(false);
-        } finally {
-            setProChecked(true);
-        }
-    };
 
     useEffect(() => {
         if (initialized.current) return;
         initialized.current = true;
 
-        // Safety timeout — if auth takes > 8s, stop loading
-        const timeout = setTimeout(() => {
-            setAuthLoading(false);
-            setProChecked(true);
-        }, 8000);
+        // Safety timeout — never stay loading forever
+        const timeout = setTimeout(() => setLoading(false), 8000);
 
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 setUser(toAppUser(session.user));
-                const provider = session.user.app_metadata?.provider || 'email';
-                setAuthProvider(provider);
-                if (provider === 'email') {
-                    checkProStatus(session.user.id);
-                } else {
-                    setIsPro(true); // Google auth → masuk langsung
-                    setProChecked(true);
-                }
                 ensureUserRow(session.user).catch(console.error);
-            } else {
-                setProChecked(true);
             }
-            setAuthLoading(false);
-        }).catch(() => {
-            setAuthLoading(false);
-            setProChecked(true);
-        });
+            setLoading(false);
+        }).catch(() => setLoading(false));
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
                 setUser(toAppUser(session.user));
-                const provider = session.user.app_metadata?.provider || 'email';
-                setAuthProvider(provider);
-                if (provider === 'email') {
-                    await checkProStatus(session.user.id);
-                } else {
-                    setIsPro(true);
-                    setProChecked(true);
-                }
                 ensureUserRow(session.user).catch(console.error);
-            } else if (event === 'SIGNED_OUT') {
+            } else {
                 setUser(null);
-                setIsPro(null);
-                setProChecked(false);
-                setAuthProvider(null);
             }
-            setAuthLoading(false);
+            setLoading(false);
         });
 
         return () => {
@@ -87,106 +40,20 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
         };
     }, []);
 
-    // Still loading auth session
-    if (authLoading) {
+    if (loading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
-    // Not logged in
     if (!user) {
         return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }} loading={false} />;
     }
 
-    // Email user: still checking pro status
-    if (authProvider === 'email' && !proChecked) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    // Email user: NOT pro (payment needed or pending)
-    if (authProvider === 'email' && isPro !== true) {
-        return <WaitingForPayment email={user.email || ''} onRefresh={() => checkProStatus(user.uid)} />;
-    }
-
-    // All good — render app
+    // Authenticated → langsung masuk ke app (credits jadi access control)
     return <>{children(user)}</>;
-};
-
-const WaitingForPayment: React.FC<{ email: string; onRefresh: () => void }> = ({ email, onRefresh }) => {
-    const [checking, setChecking] = useState(false);
-
-    // Auto-poll every 5 seconds in case webhook processes payment
-    useEffect(() => {
-        const interval = setInterval(() => {
-            onRefresh();
-        }, 5000);
-        return () => clearInterval(interval);
-    }, [onRefresh]);
-
-    const handleCheck = async () => {
-        setChecking(true);
-        await onRefresh();
-        setTimeout(() => setChecking(false), 1500);
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center p-6 font-sans">
-            <div className="max-w-md w-full bg-[#1c1c1e] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl text-center relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-blue-500/10 blur-[80px] pointer-events-none"></div>
-
-                <div className="relative z-10">
-                    <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-blue-500/20">
-                        <svg width="40" height="40" viewBox="0 0 34 24" fill="none" className="text-blue-500">
-                            <path d="M0 0H8V24H0V0Z" fill="currentColor" />
-                            <path d="M12 0H22C28.6274 0 34 5.37258 34 12C34 18.6274 28.6274 24 22 24H12V0Z" fill="currentColor" />
-                        </svg>
-                    </div>
-
-                    <h2 className="text-2xl font-bold tracking-tight mb-3">Satu Langkah Lagi!</h2>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-8">
-                        Akun <span className="text-white font-medium">{email}</span> berhasil dibuat.
-                        Selesaikan pembayaran untuk mengaktifkan akses <span className="text-blue-500 font-semibold">Visora Pro</span> Anda.
-                    </p>
-
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => window.location.href = '/formorder'}
-                            className="w-full py-4 bg-white text-black rounded-2xl font-semibold text-[15px] hover:bg-gray-200 transition-all active:scale-[0.98] shadow-xl shadow-white/5"
-                        >
-                            Lanjutkan Pembayaran
-                        </button>
-
-                        <button
-                            onClick={handleCheck}
-                            disabled={checking}
-                            className="w-full py-4 bg-white/5 text-white rounded-2xl font-medium text-[15px] border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {checking ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Mengecek...</span>
-                                </>
-                            ) : 'Saya Sudah Bayar'}
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={() => supabase.auth.signOut()}
-                        className="mt-8 text-xs text-gray-600 hover:text-gray-400 underline underline-offset-4 transition-colors"
-                    >
-                        Gunakan Akun Lain (Logout)
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
 };
 
 export const handleSignOut = () => supabase.auth.signOut();
