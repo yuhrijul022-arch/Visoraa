@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { formatRupiah } from '../utils/currency';
 import { useToast } from './ui/ToastProvider';
+import { X, ChevronRight } from 'lucide-react';
 
 declare global {
     interface Window { snap?: any; }
 }
 
-const PACKAGES = [
+const PRESET_PACKAGES = [
     { credits: 5, price: 25000 },
     { credits: 10, price: 50000 },
     { credits: 25, price: 125000 },
     { credits: 50, price: 250000 },
 ];
+
+const PRICE_PER_CREDIT = 5000;
 
 interface TopUpModalProps {
     isOpen: boolean;
@@ -22,7 +25,8 @@ interface TopUpModalProps {
 
 export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const { toast } = useToast();
-    const [selected, setSelected] = useState(1);
+    const [selectedPkg, setSelectedPkg] = useState<number | 'custom'>(1);
+    const [customQty, setCustomQty] = useState<string>('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -36,8 +40,20 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
         document.head.appendChild(script);
     }, [isOpen]);
 
+    const getCreditsToBuy = () => {
+        if (selectedPkg === 'custom') {
+            const qty = parseInt(customQty);
+            return isNaN(qty) || qty < 1 ? 0 : qty;
+        }
+        return PRESET_PACKAGES[selectedPkg].credits;
+    };
+
+    const getTotalPrice = () => getCreditsToBuy() * PRICE_PER_CREDIT;
+
     const handlePurchase = async () => {
-        const pkg = PACKAGES[selected];
+        const credits = getCreditsToBuy();
+        if (credits < 1) return;
+
         setLoading(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -53,7 +69,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ creditsQty: pkg.credits }),
+                body: JSON.stringify({ creditsQty: credits }),
             });
 
             const result = await resp.json();
@@ -65,9 +81,19 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
 
             if (window.snap) {
                 window.snap.pay(result.snapToken, {
-                    onSuccess: () => { toast({ type: 'success', title: 'Berhasil!', description: `${pkg.credits} credits ditambahkan.` }); onSuccess(); onClose(); },
-                    onPending: () => { toast({ type: 'info', title: 'Menunggu Pembayaran', description: 'Credits akan ditambahkan setelah pembayaran.' }); onClose(); },
-                    onError: () => { toast({ type: 'error', title: 'Gagal', description: 'Pembayaran gagal.' }); setLoading(false); },
+                    onSuccess: () => {
+                        toast({ type: 'success', title: 'Berhasil!', description: `${credits} credits ditambahkan.` });
+                        onSuccess();
+                        onClose();
+                    },
+                    onPending: () => {
+                        toast({ type: 'info', title: 'Menunggu Pembayaran', description: 'Credits akan ditambahkan setelah pembayaran.' });
+                        onClose();
+                    },
+                    onError: () => {
+                        toast({ type: 'error', title: 'Gagal', description: 'Pembayaran gagal.' });
+                        setLoading(false);
+                    },
                     onClose: () => { setLoading(false); },
                 });
             }
@@ -79,47 +105,114 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-[#1c1c1e] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl p-6" onClick={e => e.stopPropagation()}
-                style={{ animation: 'fadeInDown 0.2s ease-out' }}>
+    const credits = getCreditsToBuy();
+    const isValid = credits > 0;
 
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-white tracking-tight">Top Up Credits</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+    return (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-0 sm:p-4 transition-opacity" onClick={onClose}>
+            <div
+                className="bg-[#1c1c1e] w-full sm:max-w-[400px] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-white/10"
+                onClick={e => e.stopPropagation()}
+                style={{ animation: 'modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+            >
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-semibold text-white tracking-tight">Top Up Credits</h3>
+                        <p className="text-[13px] text-gray-400 mt-1 font-medium">1 credit = {formatRupiah(PRICE_PER_CREDIT)}</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white/70">
+                        <X size={18} />
                     </button>
                 </div>
 
-                <div className="text-xs text-gray-500 mb-3">1 credit = {formatRupiah(5000)}</div>
+                <div className="px-6 pb-8 overflow-y-auto max-h-[70vh] scrollbar-hide">
+                    {/* Preset Grid */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        {PRESET_PACKAGES.map((pkg, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setSelectedPkg(i)}
+                                className={`relative p-4 rounded-2xl border transition-all text-left overflow-hidden ${selectedPkg === i
+                                        ? 'border-blue-500 bg-blue-500/10'
+                                        : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
+                                    }`}
+                            >
+                                <div className="text-2xl font-semibold text-white tracking-tight">{pkg.credits}</div>
+                                <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Credits</div>
+                                <div className="text-sm font-medium text-white/80 mt-3">{formatRupiah(pkg.price)}</div>
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    {PACKAGES.map((pkg, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setSelected(i)}
-                            className={`p-4 rounded-2xl border transition-all text-left ${selected === i
-                                    ? 'border-blue-500 bg-blue-500/10'
-                                    : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
-                                }`}
-                        >
-                            <div className="text-xl font-bold text-white">{pkg.credits}</div>
-                            <div className="text-xs text-gray-400">credits</div>
-                            <div className="text-sm font-semibold text-white mt-2">{formatRupiah(pkg.price)}</div>
-                        </button>
-                    ))}
+                                {selectedPkg === i && (
+                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Custom Input */}
+                    <div
+                        onClick={() => setSelectedPkg('custom')}
+                        className={`p-4 rounded-2xl border transition-all ${selectedPkg === 'custom'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-white/5 bg-[#2c2c2e] hover:bg-[#3a3a3c]'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[13px] font-medium text-white/90">Custom Amount</span>
+                            {selectedPkg === 'custom' && (
+                                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="number"
+                                min="1"
+                                placeholder="0"
+                                value={customQty}
+                                onChange={(e) => {
+                                    setCustomQty(e.target.value);
+                                    if (selectedPkg !== 'custom') setSelectedPkg('custom');
+                                }}
+                                className="w-24 bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-lg font-semibold text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-gray-600"
+                            />
+                            <div className="flex-1">
+                                <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Credits</div>
+                                <div className="text-sm font-medium text-white/80 mt-1">
+                                    {selectedPkg === 'custom' && customQty ? formatRupiah(getTotalPrice()) : 'Rp0'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <button
-                    onClick={handlePurchase}
-                    disabled={loading}
-                    className={`w-full py-4 rounded-2xl font-bold text-[15px] transition-all flex items-center justify-center gap-2
-                    ${loading ? 'bg-blue-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 active:scale-[0.98] shadow-lg shadow-blue-600/20'} text-white`}
-                >
-                    {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Beli ${PACKAGES[selected].credits} Credits`}
-                </button>
+                {/* Footer / CTA */}
+                <div className="p-6 pt-4 bg-[#1c1c1e] border-t border-white/5 mt-auto">
+                    <button
+                        onClick={handlePurchase}
+                        disabled={loading || !isValid}
+                        className={`w-full py-4 rounded-2xl font-semibold text-[15px] transition-all flex items-center justify-center gap-2
+                        ${(loading || !isValid) ? 'bg-white/10 text-white/40 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500 active:scale-[0.98]'}`}
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                Beli {isValid ? credits : ''} Credits <ChevronRight size={18} className="opacity-60" />
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
-            <style>{`@keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
+            <style>{`
+                @keyframes modalSlideUp { 
+                    from { opacity: 0; transform: translateY(100%) scale(0.95); } 
+                    to { opacity: 1; transform: translateY(0) scale(1); } 
+                }
+                /* Hide number input arrows */
+                input[type=number]::-webkit-inner-spin-button, 
+                input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+                input[type=number] { -moz-appearance: textfield; }
+            `}</style>
         </div>
     );
 };

@@ -185,26 +185,6 @@ export default function App({ user }: AppProps) {
               <p className="text-gray-400 text-lg">
                 Upload your product below. We'll handle the rest.
               </p>
-              {/* Mode Selector */}
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <button
-                  onClick={() => setInputs(prev => ({ ...prev, mode: 'standard' }))}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                    }`}
-                >
-                  <Zap size={14} /> Standard <span className="text-[10px] opacity-60">(1 credit)</span>
-                </button>
-                <button
-                  onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border transition-all ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                    }`}
-                >
-                  <Sparkles size={14} /> Pro <span className="text-[10px] opacity-60">(2 credits)</span>
-                </button>
-              </div>
-              <div className="text-[11px] text-gray-600">
-                {creditState.credits} credits available • Cost: {totalCost} credit{totalCost > 1 ? 's' : ''}
-              </div>
             </div>
           )}
 
