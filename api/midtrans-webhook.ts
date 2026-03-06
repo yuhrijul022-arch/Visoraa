@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.warn('Webhook: creating placeholder tx for', rawOrderId);
             const { data: newTx } = await supabase.from('transactions').insert({
                 app, order_id: rawOrderId, type,
-                amount: parseInt(grossAmountStr, 10),
+                amount: parseInt(grossInt, 10),
                 email: 'unknown@webhook.com', credits: 0,
                 status: 'pending', raw_notification: notification,
             } as any).select().single();
@@ -154,6 +154,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             } as any);
 
             console.log('Credits applied:', { orderId: rawOrderId, userId, creditsToAdd, app, type });
+
+            // Fire CAPI Purchase event
+            try {
+                const userEmail = (txData as any).email || notification.customer_details?.email || '';
+                const purchaseEventId = `purchase-${rawOrderId}-${Date.now()}`;
+                const capiPayload = {
+                    eventName: 'Purchase',
+                    eventId: purchaseEventId,
+                    email: userEmail,
+                    externalId: userId,
+                    value: parseInt(grossInt, 10),
+                    currency: 'IDR',
+                    sourceUrl: `${process.env.VITE_SITE_URL || 'https://visoraa.vercel.app'}/formorder`,
+                };
+
+                const META_PIXEL_ID = process.env.VITE_META_PIXEL_ID || '988932959615649';
+                const META_CAPI_TOKEN = process.env.META_CAPI_TOKEN || '';
+
+                if (META_CAPI_TOKEN) {
+                    const hashedEmail = createHash('sha256').update(userEmail.trim().toLowerCase()).digest('hex');
+                    const hashedUserId = createHash('sha256').update(userId).digest('hex');
+
+                    const capiData = {
+                        data: [{
+                            event_name: 'Purchase',
+                            event_time: Math.floor(Date.now() / 1000),
+                            event_id: purchaseEventId,
+                            event_source_url: capiPayload.sourceUrl,
+                            action_source: 'website',
+                            user_data: {
+                                em: [hashedEmail],
+                                external_id: [hashedUserId],
+                            },
+                            custom_data: {
+                                currency: 'IDR',
+                                value: capiPayload.value,
+                            },
+                        }],
+                    };
+
+                    await fetch(`https://graph.facebook.com/v18.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_TOKEN}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(capiData),
+                    });
+                    console.log('CAPI Purchase sent:', { orderId: rawOrderId, value: capiPayload.value });
+                }
+            } catch (capiErr) {
+                console.error('CAPI Purchase error (non-blocking):', capiErr);
+            }
 
         } else {
             const mappedStatus = finalStatus === 'pending' ? 'pending' : finalStatus === 'failed' ? 'failed' : 'expired';
