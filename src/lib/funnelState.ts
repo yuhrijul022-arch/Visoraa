@@ -79,10 +79,12 @@ export const SHOWCASE_IMAGES = [
 
 // Shared benefit list
 export const BENEFITS = [
-    { text: 'Bonus Flowgen Studio – AI Foto Produk', bold: true },
     { text: 'Generate konten grafis promosi dari foto produk' },
     { text: 'Mengikuti referensi desain pilihanmu' },
-    { text: 'Hasil rapi, detail, dan tidak terlihat AI' },
     { text: 'Cocok untuk UMKM, brand, dan personal bisnis' },
-    { text: 'Akses selamanya tanpa biaya tambahan' },
+    { text: 'Akses selamanya tanpa biaya bulanan' },
+    { text: 'BONUS AKSES FLOWGEN STUDIO - AI FOTO PRODUK SENILAI Rp300.000 JADI FREE', bold: true },
+    { text: 'BONUS PRESET RAMADHAN SENILAI 50.000 JADI FREE', bold: true },
+    { text: 'BONUS AI BUSINESS ASSISTANT SENILAI 75.000 JADI FREE', bold: true },
+    { text: 'BONUS GUIDE META ADS BLUEPRINT SENILAI 199.000 JADI FREE', bold: true },
 ];

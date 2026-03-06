@@ -8,6 +8,7 @@ import { UnifiedCheckoutComponent } from './src/components/UnifiedCheckoutCompon
 import { PaymentSuccess } from './src/components/PaymentSuccess';
 import { PaymentPending } from './src/components/PaymentPending';
 import { BillingPage } from './src/pages/BillingPage';
+import { LandingPage } from './src/components/LandingPage';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 const rootElement = document.getElementById('root');
@@ -22,6 +23,7 @@ root.render(
       <ToastProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/dashboard" element={
               <AuthGate>
                 {(user) => <App user={user} />}

@@ -175,7 +175,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             {/* ── NAVBAR ── */}
             <nav style={{ padding: '1rem 0', position: 'sticky', top: 0, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(20px)', zIndex: 1000, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <a href="/landing-page.html">
+                    <a href="/">
                         <img src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_320/v1770727440/LOGO_VISORA_BLACK_fidzhe.png" alt="Visora" style={{ height: 58 }} />
                     </a>
                 </div>
@@ -195,8 +195,8 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ── SECTION B: SHOWCASE SLIDER ── */}
-                <div style={{ position: 'relative', width: '100%', height: 280, borderRadius: 20, overflow: 'hidden', marginBottom: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
+                {/* ── SECTION B: SHOWCASE SLIDER (4:5 ratio) ── */}
+                <div style={{ position: 'relative', width: '100%', paddingBottom: '125%', borderRadius: 20, overflow: 'hidden', marginBottom: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
                     {SHOWCASE_IMAGES.map((img, i) => (
                         <img key={i} src={img} alt="" style={{
                             position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
@@ -207,7 +207,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                         {SHOWCASE_IMAGES.map((_, i) => (
                             <div key={i} style={{
                                 width: showcaseIdx === i ? 16 : 6, height: 6, borderRadius: 999,
-                                background: showcaseIdx === i ? '#1d1d1f' : 'rgba(0,0,0,0.2)',
+                                background: showcaseIdx === i ? '#fff' : 'rgba(255,255,255,0.4)',
                                 transition: 'all 0.3s ease',
                             }} />
                         ))}
