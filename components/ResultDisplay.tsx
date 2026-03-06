@@ -99,17 +99,18 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
                         />
 
                         {/* Overlay Actions */}
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity flex items-center justify-center gap-2 flex-row md:flex-col md:gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2">
                             <button
                                 onClick={() => setLightboxSrc(img)}
-                                className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 hover:scale-110 transition-all"
+                                className="p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 hover:scale-110 transition-all"
                             >
-                                <ZoomIn size={20} />
+                                <ZoomIn size={18} className="md:hidden" />
+                                <ZoomIn size={20} className="hidden md:block" />
                             </button>
                             <button
                                 onClick={() => handleSingleDownload(img, idx)}
                                 disabled={downloading === idx}
-                                className="px-4 py-2 bg-white text-black font-semibold text-xs rounded-full hover:bg-gray-200 transition-all flex items-center gap-2 disabled:opacity-50"
+                                className="px-3 py-1.5 md:px-4 md:py-2 bg-white text-black font-semibold text-[11px] md:text-xs rounded-full hover:bg-gray-200 transition-all flex items-center gap-1.5 md:gap-2 disabled:opacity-50"
                             >
                                 {downloading === idx ? (
                                     <div className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin" />
