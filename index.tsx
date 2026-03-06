@@ -22,7 +22,7 @@ root.render(
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               <AuthGate>
                 {(user) => <App user={user} />}
               </AuthGate>

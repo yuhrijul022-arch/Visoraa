@@ -49,7 +49,7 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
     }
 
     if (!user) {
-        return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }} loading={false} />;
+        return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/dashboard' } }); }} loading={false} />;
     }
 
     // Authenticated → langsung masuk ke app (credits jadi access control)

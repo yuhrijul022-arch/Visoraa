@@ -8,6 +8,10 @@
             "destination": "/api/$1"
         },
         {
+            "source": "/",
+            "destination": "/landing-page.html"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

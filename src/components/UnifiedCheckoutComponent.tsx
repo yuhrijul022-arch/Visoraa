@@ -82,7 +82,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             supabase.auth.signInWithPassword({ email: savedEmail, password: savedPass }).then(({ error }) => {
                 localStorage.removeItem('visora_pending_email');
                 localStorage.removeItem('visora_pending_pass');
-                if (!error) window.location.href = '/';
+                if (!error) window.location.href = '/dashboard';
             });
         }
     }, []);
@@ -144,7 +144,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                         const { error } = await supabase.auth.signInWithPassword({ email, password });
                         localStorage.removeItem('visora_pending_email');
                         localStorage.removeItem('visora_pending_pass');
-                        if (!error) window.location.href = '/';
+                        if (!error) window.location.href = '/dashboard';
                         else window.location.href = '/success';
                     },
                     onPending: () => {
