@@ -114,7 +114,6 @@ export default function App({ user }: AppProps) {
       return;
     }
 
-    toast({ type: 'info', title: 'Menganalisis Produk...', description: 'AI sedang mempelajari komposisi terbaik untuk produk Anda.' });
     setStep('analyzing');
     setError(null);
     setTimeout(() => {
@@ -136,7 +135,6 @@ export default function App({ user }: AppProps) {
       });
       setStyleProfile(null);
       setStep('preview');
-      toast({ type: 'success', title: 'Blueprint Siap!', description: 'Komposisi telah direncanakan. Klik "Generate" untuk memulai.' });
     }, 1500);
   };
 
@@ -149,7 +147,6 @@ export default function App({ user }: AppProps) {
       return;
     }
 
-    toast({ type: 'info', title: 'Memproses Desain...', description: `AI sedang merender ${inputs.quantity || 1} variasi. Mohon tunggu sebentar.` });
     setStep('generating');
     setError(null);
     try {
