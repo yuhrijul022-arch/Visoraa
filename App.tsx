@@ -102,19 +102,21 @@ export default function App({ user }: AppProps) {
   const totalCost = (inputs.quantity || 1) * creditCost;
 
   const handleAnalyze = async () => {
-    if (!productImage) return;
+    if (!productImage) {
+      toast({ type: 'warning', title: 'Upload Produk Dulu', description: 'Silakan upload gambar produk sebelum melanjutkan.' });
+      return;
+    }
 
     // Credit check
     if (creditState.credits < totalCost) {
-      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo: ${creditState.credits}.` });
+      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo Anda: ${creditState.credits} credit.` });
       setShowTopUp(true);
       return;
     }
 
+    toast({ type: 'info', title: 'Menganalisis Produk...', description: 'AI sedang mempelajari komposisi terbaik untuk produk Anda.' });
     setStep('analyzing');
     setError(null);
-    // For the planning phase, we skip server-side call—use a simple timeout to simulate
-    // In production, planning is done server-side within the generate call
     setTimeout(() => {
       setBlueprint({
         canvas: { ratio: inputs.ratio, safe_margin_percent: 10 },
@@ -134,6 +136,7 @@ export default function App({ user }: AppProps) {
       });
       setStyleProfile(null);
       setStep('preview');
+      toast({ type: 'success', title: 'Blueprint Siap!', description: 'Komposisi telah direncanakan. Klik "Generate" untuk memulai.' });
     }, 1500);
   };
 
@@ -141,11 +144,12 @@ export default function App({ user }: AppProps) {
     if (!productImage || !blueprint) return;
 
     if (creditState.credits < totalCost) {
-      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo: ${creditState.credits}.` });
+      toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo Anda: ${creditState.credits} credit. Silakan top up terlebih dahulu.` });
       setShowTopUp(true);
       return;
     }
 
+    toast({ type: 'info', title: 'Memproses Desain...', description: `AI sedang merender ${inputs.quantity || 1} variasi. Mohon tunggu sebentar.` });
     setStep('generating');
     setError(null);
     try {
@@ -160,6 +164,7 @@ export default function App({ user }: AppProps) {
         setImageUrls(urls);
         setStep('done');
         creditState.refresh();
+        toast({ type: 'success', title: 'Desain Berhasil! 🎉', description: `${urls.length} variasi telah dibuat. Credit terpakai: ${totalCost}.` });
       } else {
         throw new Error("No images generated");
       }
@@ -167,12 +172,18 @@ export default function App({ user }: AppProps) {
       console.error(e);
       const msg = e.message || 'Generation failed';
       if (msg.includes('INSUFFICIENT_CREDITS')) {
-        setError('Credit tidak cukup. Silakan top up.');
+        setError('Credit tidak cukup untuk melanjutkan.');
+        toast({ type: 'error', title: 'Credit Habis', description: 'Silakan top up credit untuk melanjutkan generate desain.' });
         setShowTopUp(true);
       } else if (msg.includes('RATE_LIMITED')) {
-        setError(msg.replace('RATE_LIMITED: ', ''));
+        setError('Server sedang sibuk, coba beberapa saat lagi.');
+        toast({ type: 'warning', title: 'Terlalu Banyak Permintaan', description: 'Server sedang sibuk, coba beberapa saat lagi. Cooldown 3 menit.' });
+      } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+        setError('Koneksi ke server timeout. Silakan coba lagi.');
+        toast({ type: 'error', title: 'Koneksi Timeout', description: 'Server tidak merespon. Periksa koneksi internet Anda dan coba lagi.' });
       } else {
-        setError(msg);
+        setError('Terjadi kesalahan saat generate. Silakan coba lagi.');
+        toast({ type: 'error', title: 'Generate Gagal', description: 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.' });
       }
       setStep('preview');
     }
