@@ -40,8 +40,9 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      /* Disable overscroll bounce (native app feel) */
-      overscroll-behavior: none;
+      /* Disable horizontal overscroll bounce, but allow vertical for pull-to-refresh */
+      overscroll-behavior-x: none;
+      overscroll-behavior-y: auto;
       /* Disable text selection for app feel */
       -webkit-user-select: none;
       user-select: none;
