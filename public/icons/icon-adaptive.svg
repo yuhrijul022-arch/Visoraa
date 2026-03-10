@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    rect.bg { fill: white; }
+    path { fill: black; }
+    @media (prefers-color-scheme: dark) {
+      rect.bg { fill: black; }
+      path { fill: white; }
+    }
+  </style>
+  <rect class="bg" width="512" height="512"/>
+  <path d="M120 96H200V416H120V96Z"/>
+  <path d="M232 96H312C365.019 96 408 138.981 408 192V320C408 373.019 365.019 416 312 416H232V96Z"/>
+</svg>
