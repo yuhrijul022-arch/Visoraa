@@ -7,7 +7,7 @@ const openrouterApiKey = process.env.OPENROUTER_API_KEY!;
 
 const MODELS: Record<string, { model: string; creditCost: number }> = {
     standard: { model: 'google/gemini-3.1-flash-image-preview', creditCost: 1 },
-    pro: { model: 'google/gemini-3-pro-preview', creditCost: 2 },
+    pro: { model: 'google/gemini-3-pro-image-preview', creditCost: 2 },
 };
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
