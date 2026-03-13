@@ -14,12 +14,19 @@ export const config = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    console.log(`\n--- [MAYAR WEBHOOK INCOMING] ---`);
+    console.log(`Method: ${req.method}`);
+    console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
+
     if (req.method === 'OPTIONS') return res.status(200).send('OK');
     if (req.method !== 'POST') return res.status(200).send('OK');
 
     try {
-        const signature = req.headers['mayar-signature'] as string;
-        if (!signature) return res.status(401).send('Missing signature');
+        const signature = (req.headers['mayar-signature'] || req.headers['x-mayar-signature']) as string | undefined;
+        if (!signature) {
+            console.error('[Error] Missing signature header. Mayar did not send mayar-signature.');
+            return res.status(401).send('Missing signature');
+        }
 
         // Read raw body for accurate HMAC computation
         const chunks: Buffer[] = [];
