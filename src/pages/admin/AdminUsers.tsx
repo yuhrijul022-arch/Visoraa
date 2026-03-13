@@ -14,7 +14,7 @@ export const AdminUsers: React.FC = () => {
 
     // Form States
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', plan: 'basic', credits: 0
+        name: '', email: '', password: '', plan: 'basic', credits: 0, isAdmin: false
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,7 +82,7 @@ export const AdminUsers: React.FC = () => {
     };
 
     const openCreateModal = () => {
-        setFormData({ name: '', email: '', password: '', plan: 'basic', credits: 0 });
+        setFormData({ name: '', email: '', password: '', plan: 'basic', credits: 0, isAdmin: false });
         setShowCreateModal(true);
     };
 
@@ -93,7 +93,8 @@ export const AdminUsers: React.FC = () => {
             email: user.email || '',
             password: '', // Kept blank for security, we don't update password here
             plan: user.plan || 'basic',
-            credits: user.credits || 0
+            credits: user.credits || 0,
+            isAdmin: !!user.isAdmin
         });
         setShowEditModal(true);
     };
@@ -257,6 +258,18 @@ export const AdminUsers: React.FC = () => {
                                     <label className="text-xs text-gray-400 mb-1 block">Credits</label>
                                     <input type="number" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value) || 0})} className="w-full bg-black border border-[#333] rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none" />
                                 </div>
+                            </div>
+                            <div className="pt-2 border-t border-[#333] mt-2 flex items-center justify-between">
+                                 <div>
+                                      <label className="text-sm font-medium text-white block">Hak Akses Admin</label>
+                                      <p className="text-[10px] text-gray-500">Berikan akses halaman /admin untuk user ini.</p>
+                                 </div>
+                                 <button
+                                     onClick={() => setFormData(prev => ({ ...prev, isAdmin: !prev.isAdmin }))}
+                                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${formData.isAdmin ? 'bg-blue-600' : 'bg-gray-700'}`}
+                                 >
+                                     <span className={`${formData.isAdmin ? 'translate-x-4' : 'translate-x-1'} inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform`} />
+                                 </button>
                             </div>
                         </div>
 

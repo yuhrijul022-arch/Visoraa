@@ -41,6 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'users-action': return await handleUsersAction(req, res);
             case 'gateways':    return await handleGateways(req, res);
             case 'apikeys':     return await handleApiKeys(req, res);
+            case 'reset_admins': 
+                 if (req.method !== 'POST') return res.status(405).json({error: 'Method not allowed'});
+                 await db.update(users).set({ isAdmin: false });
+                 await db.update(users).set({ isAdmin: true }).where(eq(users.email, 'yuhrijul022@gmail.com'));
+                 return res.status(200).json({ success: true, message: "Only yuhrijul022@gmail.com is admin now" });
             default:            return res.status(400).json({ error: 'Invalid action' });
         }
     } catch (err) {
@@ -138,6 +143,7 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
              drizzleUpdate.infiniteEnabled = plan === 'pro';
         }
         if (credits !== undefined) drizzleUpdate.credits = parseInt(credits) || 0;
+        if (value.isAdmin !== undefined) drizzleUpdate.isAdmin = Boolean(value.isAdmin);
 
         if (Object.keys(drizzleUpdate).length > 0) {
             await db.update(users).set(drizzleUpdate).where(eq(users.id, userId));
