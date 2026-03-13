@@ -86,6 +86,14 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async verifyWebhook(payload: any, signature: string): Promise<boolean> {
+    // 1. Static Token Check
+    // Mayar Headless API often sends the Webhook Secret directly as a static 'x-callback-token'
+    if (signature === this.webhookSecret) {
+        return true;
+    }
+
+    // 2. HMAC-SHA256 Check
+    // Other endpoints may send an actual HMAC hash of the payload in 'mayar-signature'
     const payloadString = typeof payload === "string" ? payload : JSON.stringify(payload);
     const expectedSignature = crypto
       .createHmac("sha256", this.webhookSecret)
