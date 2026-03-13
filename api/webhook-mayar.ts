@@ -34,7 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).send('Config error');
         }
 
-        const provider = new MayarProvider("", secret);
+        const provider = new MayarProvider({
+            serverKey: process.env.MAYAR_SERVER_KEY || "",
+            webhookSecret: secret
+        });
         const isValid = await provider.verifyWebhook(JSON.stringify(payload), signature);
 
         if (!isValid) {
