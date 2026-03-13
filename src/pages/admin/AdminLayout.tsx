@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient.js';
 import { LayoutDashboard, Users, Key, CreditCard, LogOut, ArrowLeft } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {

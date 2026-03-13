@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { ensureUserRow, toAppUser } from '../lib/auth';
-import { LoginPage } from './LoginPage';
-import { AppUser } from '../../types';
+import { supabase } from '../lib/supabaseClient.js';
+import { ensureUserRow, toAppUser } from '../lib/auth.js';
+import { LoginPage } from './LoginPage.js';
+import { AppUser } from '../../types.js';
 
 export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AppUser | null>(null);

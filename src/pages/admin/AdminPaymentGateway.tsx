@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient.js';
 import { CreditCard, Save } from 'lucide-react';
 
 export const AdminPaymentGateway: React.FC = () => {

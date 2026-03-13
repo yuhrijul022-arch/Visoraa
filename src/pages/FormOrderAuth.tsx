@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from '../components/ui/ToastProvider';
-import { supabase } from '../lib/supabaseClient';
-import { formatRupiah } from '../utils/currency';
-import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, initPixel } from '../lib/metaPixel';
+import { useToast } from '../components/ui/ToastProvider.js';
+import { supabase } from '../lib/supabaseClient.js';
+import { formatRupiah } from '../utils/currency.js';
+import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, initPixel } from '../lib/metaPixel.js';
 
 export const FormOrderAuth: React.FC = () => {
     const { toast } = useToast();

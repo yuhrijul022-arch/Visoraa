@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { formatRupiah } from '../utils/currency';
-import { useToast } from './ui/ToastProvider';
+import { supabase } from '../lib/supabaseClient.js';
+import { formatRupiah } from '../utils/currency.js';
+import { useToast } from './ui/ToastProvider.js';
 import { X, ChevronRight } from 'lucide-react';
 
 declare global {

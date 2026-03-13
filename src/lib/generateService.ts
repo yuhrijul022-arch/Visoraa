@@ -1,5 +1,5 @@
-import { supabase } from './supabaseClient';
-import { DesignInputs, FileData, LayoutBlueprint, StyleProfile } from '../../types';
+import { supabase } from './supabaseClient.js';
+import { DesignInputs, FileData, LayoutBlueprint, StyleProfile } from '../../types.js';
 
 interface GenerateResult {
     status: 'SUCCEEDED' | 'PARTIAL' | 'FAILED';

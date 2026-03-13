@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient.js';
 import { Search, Edit2, Shield, Trash2, Check, X, CreditCard } from 'lucide-react';
 
 export const AdminUsers: React.FC = () => {

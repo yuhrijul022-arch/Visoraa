@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from './supabaseClient';
-import { AppUser } from '../../types';
+import { supabase } from './supabaseClient.js';
+import { AppUser } from '../../types.js';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 function toAppUser(user: SupabaseUser): AppUser {

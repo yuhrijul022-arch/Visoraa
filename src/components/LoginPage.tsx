@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useToast } from './ui/ToastProvider';
+import { supabase } from '../lib/supabaseClient.js';
+import { useToast } from './ui/ToastProvider.js';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginPageProps {

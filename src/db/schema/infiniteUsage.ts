@@ -1,5 +1,5 @@
 import { pgTable, uuid, integer, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { users } from "./users";
+import { users } from './users.js';
 
 export const infiniteUsage = pgTable("infinite_usage", {
   id: uuid("id").primaryKey().defaultRandom(),

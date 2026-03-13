@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useToast } from './ui/ToastProvider';
-import { supabase } from '../lib/supabaseClient';
-import { formatRupiah } from '../utils/currency';
+import { useToast } from './ui/ToastProvider.js';
+import { supabase } from '../lib/supabaseClient.js';
+import { formatRupiah } from '../utils/currency.js';
 import {
     getUserCount, incrementUserCount, getUserProgress,
     getNotifIndex, setNotifIndex, setLastNotifTime,
     NOTIF_NAMES, NOTIF_CITIES, NOTIF_TIMING,
     TESTIMONIALS, SHOWCASE_IMAGES, BENEFITS,
 } from '../lib/funnelState';
-import { initPixel, trackPageView, trackInitiateCheckout, trackAddPaymentInfo, generateEventId, getFbpFbc } from '../lib/metaPixel';
+import { initPixel, trackPageView, trackInitiateCheckout, trackAddPaymentInfo, generateEventId, getFbpFbc } from '../lib/metaPixel.js';
 
 declare global {
     interface Window { snap?: any; }

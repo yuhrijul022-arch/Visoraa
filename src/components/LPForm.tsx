@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { initPixel, trackPageView, trackViewContent } from '../lib/metaPixel';
+import { initPixel, trackPageView, trackViewContent } from '../lib/metaPixel.js';
 import {
     getUserCount, incrementUserCount,
     getNotifIndex, setNotifIndex, setLastNotifTime,

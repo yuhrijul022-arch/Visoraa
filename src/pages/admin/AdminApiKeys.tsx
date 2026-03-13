@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient.js';
 import { Key, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 
 export const AdminApiKeys: React.FC = () => {

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useCredits } from '../lib/credits';
-import { formatRupiah } from '../utils/currency';
-import { TopUpModal } from '../components/TopUpModal';
+import { supabase } from '../lib/supabaseClient.js';
+import { useCredits } from '../lib/credits.js';
+import { formatRupiah } from '../utils/currency.js';
+import { TopUpModal } from '../components/TopUpModal.js';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 

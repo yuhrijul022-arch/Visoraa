@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient.js';
 
 const AdminGate: React.FC = () => {
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);

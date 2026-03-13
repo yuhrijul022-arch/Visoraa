@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AppUser } from '../../types';
-import { supabase } from '../lib/supabaseClient';
+import { AppUser } from '../../types.js';
+import { supabase } from '../lib/supabaseClient.js';
 import { useNavigate } from 'react-router-dom';
 
 interface ProfileMenuProps {
