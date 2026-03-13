@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ArrowRight, Sparkles, Settings2, ImagePlus, Upload } from 'lucide-react';
+import { ArrowRight, Sparkles, Settings2, ImagePlus, Upload, Zap } from 'lucide-react';
 import { DesignInputs, FileData } from '../types';
 
 interface BottomControlBarProps {
@@ -13,6 +13,7 @@ interface BottomControlBarProps {
     onAnalyze: () => void;
     onGenerate: () => void;
     isLocked: boolean;
+    isInfiniteEnabled: boolean;
     onOpenSettings: () => void;
 }
 
@@ -78,6 +79,7 @@ const BottomControlBar: React.FC<BottomControlBarProps> = ({
     onAnalyze,
     onGenerate,
     isLocked,
+    isInfiniteEnabled,
     onOpenSettings
 }) => {
 
@@ -157,6 +159,29 @@ const BottomControlBar: React.FC<BottomControlBarProps> = ({
                         className="w-full bg-white/5 md:bg-white/5 text-white placeholder-gray-500 text-sm px-4 py-3.5 outline-none rounded-2xl resize-none min-h-[48px] border border-white/10 hover:border-white/20 focus:border-blue-500/50 transition-all leading-relaxed scrollbar-hide"
                         style={{ overflowY: inputs.customPrompt.length > 100 ? 'auto' : 'hidden' }}
                     />
+                    {/* Mode Selector in Settings */}
+                    <div className="mt-3">
+                        <label className="text-[10px] font-medium text-gray-400 mb-2 block">AI Model</label>
+                        <div className="flex gap-2">
+                            <button onClick={() => setInputs(prev => ({ ...prev, mode: 'standard' }))}
+                                className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                                <Zap size={10} /> Standard
+                            </button>
+                            <button onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
+                                className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                                <Sparkles size={10} /> Pro
+                            </button>
+                            {isInfiniteEnabled && (
+                                <button onClick={() => setInputs(prev => ({ ...prev, mode: 'infinite' }))}
+                                    className={`flex-[1.2] py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'infinite' ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                                    <Sparkles size={10} className="text-orange-400" /> Infinite
+                                </button>
+                            )}
+                        </div>
+                        <div className="text-[9px] text-gray-600 mt-1">
+                            {inputs.mode === 'infinite' ? 'Free generation for PRO users' : (inputs.mode === 'pro' ? '2 credits per image • Higher quality' : '1 credit per image • Fast generation')}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Row 3: Actions (Mobile) / Right (Desktop) */}

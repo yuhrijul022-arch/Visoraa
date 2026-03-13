@@ -11,6 +11,15 @@ import { BillingPage } from './src/pages/BillingPage';
 import { LandingPage } from './src/components/LandingPage';
 import { LPForm } from './src/components/LPForm';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { FormOrderAuth } from './src/pages/FormOrderAuth';
+
+// Admin Imports
+import AdminGate from './src/components/AdminGate';
+import { AdminLayout } from './src/pages/admin/AdminLayout';
+import { AdminOverview } from './src/pages/admin/AdminOverview';
+import { AdminUsers } from './src/pages/admin/AdminUsers';
+import { AdminApiKeys } from './src/pages/admin/AdminApiKeys';
+import { AdminPaymentGateway } from './src/pages/admin/AdminPaymentGateway';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -32,9 +41,20 @@ root.render(
               </AuthGate>
             } />
             <Route path="/formorder" element={<UnifiedCheckoutComponent />} />
+            <Route path="/formorderauth" element={<FormOrderAuth />} />
             <Route path="/success" element={<PaymentSuccess />} />
             <Route path="/pending" element={<PaymentPending />} />
             <Route path="/billing" element={<BillingPage />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminGate />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="api-keys" element={<AdminApiKeys />} />
+                <Route path="payment-gateway" element={<AdminPaymentGateway />} />
+              </Route>
+            </Route>
           </Routes>
         </BrowserRouter>
       </ToastProvider>

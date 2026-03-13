@@ -28,13 +28,20 @@ const USE_CASES = [
     { num: '05', title: 'Daily Content', desc: 'Daily content tanpa ribet desain ulang' },
 ];
 
-const BENEFITS_LP = [
-    { text: 'Bonus Flowgen Studio – AI Foto Produk', bold: true },
-    'Generate konten grafis promosi dari foto produk',
-    'Mengikuti referensi desain pilihanmu',
-    'Hasil rapi, detail, dan tidak terlihat AI',
-    'Cocok untuk UMKM, brand, dan personal bisnis',
-    'Akses selamanya tanpa biaya tambahan',
+const BENEFITS_BASIC = [
+    'Generate desain statis & dinamis',
+    'Akses ke seluruh template dasar',
+    'Resolusi standar (1080p)',
+    'Akses selamanya (lifetime)',
+];
+
+const BENEFITS_PRO = [
+    { text: 'Akses Fitur Infinite Mode', bold: true },
+    'Generate gambar tanpa limit dengan Infinite Mode',
+    'Resolusi tinggi (4K & Ultra HD)',
+    'Prioritas antrean server (Jalur Cepat)',
+    'Akses eksklusif template Pro',
+    'Akses selamanya (lifetime)',
 ];
 
 const FAQS = [
@@ -211,32 +218,58 @@ export const LPForm: React.FC = () => {
             {/* ─── PRICING ─── */}
             <section className="lp-pricing-section" id="pricing-section">
                 <div className="lp-container">
-                    <div className="lp-pricing-card">
-                        <div className="lp-promo-badge">Early Access Promo</div>
-                        <h2>Akses Selamanya dengan Harga Spesial</h2>
-                        <div style={{ marginBottom: 16 }}>
-                            <span className="lp-original-price">Rp 150.000</span>
-                            <div className="lp-promo-price">Rp 99.000</div>
-                            <p style={{ marginBottom: 0 }}>Akses selamanya (lifetime)</p>
+                    <div className="lp-section-header">
+                        <h2>Satu Kali Bayar. Pilih Paket yang Tepat Untukmu.</h2>
+                        <p>Akses selamanya, tanpa biaya langganan bulanan tersembunyi.</p>
+                        <div className="lp-counter-bar" style={{ maxWidth: 400, margin: '20px auto 14px' }}>
+                            <div className="lp-counter-fill" style={{ width: `${progress}%` }} />
                         </div>
-                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>Harga akan naik setelah 150 user pertama tercapai — no gimmick</p>
-                        <div className="lp-counter-bar"><div className="lp-counter-fill" style={{ width: `${progress}%` }} /></div>
-                        <p>🔥 {userCount} / 150 user sudah join</p>
+                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>🔥 {userCount} / 150 user pertama sudah bergabung. Harga naik sebentar lagi.</p>
+                    </div>
 
-                        <div className="lp-benefit-list">
-                            {BENEFITS_LP.map((b, i) => {
-                                const text = typeof b === 'string' ? b : b.text;
-                                const bold = typeof b === 'string' ? false : b.bold;
-                                return (
+                    <div className="lp-pricing-grid">
+                        {/* Basic Plan */}
+                        <div className="lp-pricing-card">
+                            <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Basic</h3>
+                            <p style={{ color: 'var(--lp-text-secondary)', marginBottom: '24px' }}>Untuk pemula yang ingin visual cepat.</p>
+                            <div style={{ marginBottom: 24 }}>
+                                <span className="lp-original-price">Rp 150.000</span>
+                                <div className="lp-promo-price">Rp 99.000</div>
+                            </div>
+                            <div className="lp-benefit-list">
+                                {BENEFITS_BASIC.map((b, i) => (
                                     <div key={i} className="lp-benefit-item">
                                         <span className="lp-check">✓</span>
-                                        <span>{bold ? <strong>{text}</strong> : text}</span>
+                                        <span>{b}</span>
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
+                            <a href="/formorder?plan=basic" className="lp-btn lp-btn-dark lp-btn-block">Pilih Basic</a>
                         </div>
-                        <a href="/formorder" className="lp-btn lp-btn-dark" style={{ width: '100%', padding: 18, display: 'block', textAlign: 'center' }}>Beli Visora Sekarang</a>
-                        <p style={{ fontSize: '0.85rem', marginTop: '1rem' }}>Sekali bayar. Tidak ada biaya bulanan. Tanpa Langganan.</p>
+
+                        {/* Pro Plan */}
+                        <div className="lp-pricing-card lp-pricing-pro">
+                            <div className="lp-promo-badge" style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)' }}>Paling Laris</div>
+                            <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#fff' }}>Pro</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Akses tanpa batas untuk bisnis & agency.</p>
+                            <div style={{ marginBottom: 24 }}>
+                                <span className="lp-original-price" style={{ color: 'rgba(255,255,255,0.5)' }}>Rp 250.000</span>
+                                <div className="lp-promo-price" style={{ color: '#fff' }}>Rp 145.000</div>
+                            </div>
+                            <div className="lp-benefit-list" style={{ color: '#fff' }}>
+                                {BENEFITS_PRO.map((b, i) => {
+                                    const text = typeof b === 'string' ? b : b.text;
+                                    const bold = typeof b === 'string' ? false : b.bold;
+                                    return (
+                                        <div key={i} className="flex items-center gap-2 mb-3">
+                                            <span className="text-green-400">✓</span>
+                                            <span className="text-white">{bold ? <strong>{text}</strong> : text}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <a href="/formorder?plan=pro" className="lp-btn lp-btn-block" style={{ background: '#fff', color: '#000' }}>Pilih Pro</a>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -395,15 +428,18 @@ h3 { font-size: 1.35rem; line-height: 1.2; margin-bottom: 12px; }
 
 /* PRICING */
 .lp-pricing-section { padding: var(--lp-py-sm) 0 var(--lp-py); background: #F5F5F7; text-align: center; }
-.lp-pricing-card { background: #fff; max-width: 520px; margin: 0 auto; border-radius: 24px; padding: 44px 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.02); }
-.lp-promo-badge { display: inline-block; background: rgba(0,113,227,0.1); color: var(--lp-accent-blue); font-size: 0.875rem; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px; }
-.lp-promo-price { font-size: 3.25rem; font-weight: 800; color: var(--lp-text-primary); letter-spacing: -0.03em; }
-.lp-original-price { font-size: 1.15rem; color: var(--lp-text-secondary); text-decoration: line-through; display: block; margin-bottom: 6px; }
-.lp-counter-bar { width: 100%; height: 6px; background: #F5F5F7; border-radius: 999px; overflow: hidden; margin: 14px 0; }
+.lp-pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; max-width: 860px; margin: 0 auto; align-items: stretch; position: relative; }
+.lp-pricing-card { background: #fff; border-radius: 24px; padding: 44px 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; text-align: left; position: relative; }
+.lp-pricing-pro { background: #111; color: #fff; box-shadow: 0 30px 60px rgba(0,0,0,0.15); transform: scale(1.02); border: 1px solid rgba(255,255,255,0.1); }
+.lp-promo-badge { display: inline-block; background: var(--lp-accent-blue); color: #fff; font-size: 0.875rem; font-weight: 700; padding: 6px 16px; border-radius: 999px; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(0,113,227,0.3); }
+.lp-promo-price { font-size: 3.25rem; font-weight: 800; color: var(--lp-text-primary); letter-spacing: -0.03em; line-height: 1; margin-top: 4px; }
+.lp-original-price { font-size: 1.15rem; color: var(--lp-text-secondary); text-decoration: line-through; display: block; }
+.lp-counter-bar { width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden; margin: 14px 0; }
 .lp-counter-fill { height: 100%; background: #FF3B30; transition: width 0.4s ease; }
-.lp-benefit-list { text-align: left; margin: 26px 0; }
-.lp-benefit-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 1rem; }
-.lp-check { color: #34C759; font-weight: 900; line-height: 1.2; }
+.lp-benefit-list { text-align: left; margin: 26px 0; flex-grow: 1; }
+.lp-benefit-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 1rem; color: var(--lp-text-primary); }
+.lp-check { color: #34C759; font-weight: 900; line-height: 1.2; flex-shrink: 0; }
+.lp-btn-block { width: 100%; padding: 18px; display: block; text-align: center; }
 
 /* FAQ */
 .lp-faq-section { padding: var(--lp-py) 0; }
@@ -437,7 +473,8 @@ h3 { font-size: 1.35rem; line-height: 1.2; margin-bottom: 12px; }
     .lp-visual-arrow { transform: rotate(90deg); margin: 1rem 0; }
     .lp-usecases-wrap { padding: 18px; }
     .lp-uc-card { grid-column: span 12; }
-    .lp-pricing-card { padding: 36px 20px; }
+    .lp-pricing-grid { grid-template-columns: 1fr; }
+    .lp-pricing-pro { transform: scale(1); }
     .lp-section-header { margin-bottom: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {

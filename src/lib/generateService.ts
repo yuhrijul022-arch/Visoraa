@@ -8,6 +8,7 @@ interface GenerateResult {
     successCount: number;
     failedCount: number;
     error: string | null;
+    redirectTo?: string;
 }
 
 export async function generateViaAPI(
@@ -44,7 +45,9 @@ export async function generateViaAPI(
     if (blueprint) body.blueprint = blueprint;
     if (styleProfile) body.styleProfile = styleProfile;
 
-    const response = await fetch('/api/generate', {
+    const endpoint = inputs.mode === 'infinite' ? '/api/generate-infinite' : '/api/generate';
+
+    const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -54,8 +57,12 @@ export async function generateViaAPI(
     });
 
     if (!response.ok) {
-        const errData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errData = await response.json().catch(() => ({ error: 'Unknown error', redirectTo: null }));
         const errMsg = errData.error || `HTTP ${response.status}`;
+        
+        if (errData.redirectTo) {
+            throw new Error(`REDIRECT:${errData.redirectTo}:${errMsg}`);
+        }
 
         if (response.status === 402) {
             throw new Error('INSUFFICIENT_CREDITS: ' + errMsg);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DesignInputs, FileData, LayoutBlueprint, StyleProfile, AppUser } from './types';
 import { generateViaAPI, fetchRecentGenerations } from './src/lib/generateService';
 import { useCredits } from './src/lib/credits';
+import { supabase } from './src/lib/supabaseClient';
 import BottomControlBar from './components/BottomControlBar';
 import ResultDisplay from './components/ResultDisplay';
 import { ProfileMenu } from './src/components/ProfileMenu';
@@ -48,18 +49,22 @@ export default function App({ user }: AppProps) {
   const [refImage, setRefImage] = useState<FileData | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [dbUser, setDbUser] = useState<any>(null);
 
   const [blueprint, setBlueprint] = useState<LayoutBlueprint | null>(null);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
 
-  // Restore image URLs from localStorage
-  const [imageUrls, setImageUrls] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('visora_image_urls');
-      if (saved) return JSON.parse(saved);
-    } catch { /* ignore */ }
-    return [];
-  });
+    // Restore image URLs from localStorage
+    const [imageUrls, setImageUrls] = useState<string[]>(() => {
+      try {
+        const saved = localStorage.getItem('visora_image_urls');
+        if (saved) return JSON.parse(saved);
+      } catch { /* ignore */ }
+      return [];
+    });
+  
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
@@ -93,12 +98,30 @@ export default function App({ user }: AppProps) {
     }
   }, []);
 
+  // Fetch user from DB to know plan and infiniteEnabled
+  useEffect(() => {
+    if (user?.uid) {
+      supabase.from('users').select('*').eq('id', user.uid).single().then(({ data }) => {
+        setDbUser(data);
+        if (data && data.plan && localStorage.getItem('visora_welcomed') !== 'true') {
+            const activatedAt = data.plan_activated_at ? new Date(data.plan_activated_at).getTime() : 0;
+            // Welcome msg for users activated in the last 24h
+            if (Date.now() - activatedAt < 24 * 60 * 60 * 1000) {
+               setShowWelcomeModal(true);
+            } else {
+               localStorage.setItem('visora_welcomed', 'true');
+            }
+        }
+      });
+    }
+  }, [user?.uid]);
+
   const creditState = useCredits(user.uid);
   const { toast } = useToast();
 
   const isLocked = step === 'analyzing' || step === 'generating';
 
-  const creditCost = inputs.mode === 'pro' ? 2 : 1;
+  const creditCost = inputs.mode === 'infinite' ? 0 : (inputs.mode === 'pro' ? 2 : 1);
   const totalCost = (inputs.quantity || 1) * creditCost;
 
   const handleAnalyze = async () => {
@@ -168,13 +191,20 @@ export default function App({ user }: AppProps) {
     } catch (e: any) {
       console.error(e);
       const msg = e.message || 'Generation failed';
+      
+      if (msg.startsWith('REDIRECT:')) {
+         const parts = msg.split(':');
+         window.location.href = parts[1];
+         return;
+      }
+      
       if (msg.includes('INSUFFICIENT_CREDITS')) {
         setError('Credit tidak cukup untuk melanjutkan.');
         toast({ type: 'error', title: 'Credit Habis', description: 'Silakan top up credit untuk melanjutkan generate desain.' });
         setShowTopUp(true);
       } else if (msg.includes('RATE_LIMITED')) {
-        setError('Server sedang sibuk, coba beberapa saat lagi.');
-        toast({ type: 'warning', title: 'Terlalu Banyak Permintaan', description: 'Server sedang sibuk, coba beberapa saat lagi. Cooldown 3 menit.' });
+        setError('Server sedang sibuk atau melampaui limit.');
+        toast({ type: 'warning', title: 'Terlalu Banyak Permintaan', description: msg.includes('limit') ? msg.split('RATE_LIMITED: ')[1] : 'Server sedang sibuk, coba beberapa saat lagi.' });
       } else if (msg.includes('timeout') || msg.includes('Timeout')) {
         setError('Koneksi ke server timeout. Silakan coba lagi.');
         toast({ type: 'error', title: 'Koneksi Timeout', description: 'Server tidak merespon. Periksa koneksi internet Anda dan coba lagi.' });
@@ -234,6 +264,22 @@ export default function App({ user }: AppProps) {
 
         {/* Central Display */}
         <div className="flex flex-col items-center justify-center p-4 min-h-[60vh]">
+          {dbUser?.plan === 'basic' && (
+            <div className="mb-6 w-full max-w-2xl bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between" style={{ animation: 'fadeInDown 0.4s ease-out' }}>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                        <Sparkles size={20} className="text-purple-400" />
+                    </div>
+                    <div>
+                        <h4 className="text-white font-semibold text-sm">Upgrade ke Pro</h4>
+                        <p className="text-gray-400 text-xs">Unlock Infinite Mode & fitur 4K Resolution.</p>
+                    </div>
+                </div>
+                <button onClick={() => setShowUpgradeModal(true)} className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:bg-purple-100 transition-colors">
+                    Lihat Penawaran
+                </button>
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-sm" style={{ animation: 'fadeInDown 0.3s ease-out' }}>
@@ -272,8 +318,8 @@ export default function App({ user }: AppProps) {
                   <p className="text-gray-400 text-sm">AI has planned the composition. Ready to render.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-mono border ${inputs.mode === 'pro' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
-                    {inputs.mode === 'pro' ? 'PRO MODE' : 'STANDARD'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-mono border ${inputs.mode === 'infinite' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : (inputs.mode === 'pro' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20')}`}>
+                    {inputs.mode === 'infinite' ? 'INFINITE MODE' : (inputs.mode === 'pro' ? 'PRO MODE' : 'STANDARD')}
                   </span>
                 </div>
               </div>
@@ -293,7 +339,7 @@ export default function App({ user }: AppProps) {
                 </div>
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Cost</div>
-                  <div className="text-sm font-semibold text-white">{totalCost} credit{totalCost > 1 ? 's' : ''}</div>
+                  <div className="text-sm font-semibold text-white">{inputs.mode === 'infinite' ? 'Free (Pro)' : `${totalCost} credit${totalCost > 1 ? 's' : ''}`}</div>
                 </div>
               </div>
 
@@ -341,6 +387,7 @@ export default function App({ user }: AppProps) {
           onAnalyze={handleAnalyze}
           onGenerate={handleGenerate}
           isLocked={isLocked}
+          isInfiniteEnabled={dbUser?.plan === 'pro' && dbUser?.infiniteEnabled}
           onOpenSettings={() => setShowSettings(true)}
         />
       )}
@@ -407,9 +454,16 @@ export default function App({ user }: AppProps) {
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                         <Zap size={10} /> Standard
                       </button>
-                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
+                      <button onClick={() => {
+                          if (dbUser?.plan !== 'pro') {
+                              setShowSettings(false);
+                              setShowUpgradeModal(true);
+                              return;
+                          }
+                          setInputs(prev => ({ ...prev, mode: 'pro' }));
+                      }}
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                        <Sparkles size={10} /> Pro
+                        <Sparkles size={10} /> Pro {dbUser?.plan !== 'pro' && '🔒'}
                       </button>
                     </div>
                     <div className="text-[9px] text-gray-600 mt-1">
@@ -473,6 +527,52 @@ export default function App({ user }: AppProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
+              <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
+                      <Sparkles size={28} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Upgrade ke Pro</h3>
+                  <p className="text-gray-400 text-sm mb-6">Nikmati akses tanpa batas dengan Infinite Mode, resolusi Ultra HD (4K), dan template eksklusif.</p>
+                  
+                  <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Infinite Generate Mode</span></div>
+                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Resolusi 4K & Ultra HD</span></div>
+                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Jalur Cepat (Prioritas Server)</span></div>
+                  </div>
+
+                  <div className="flex gap-3">
+                      <button onClick={() => setShowUpgradeModal(false)} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors">Nanti</button>
+                      <button onClick={() => { setShowUpgradeModal(false); window.location.href = '/formorderauth?plan=pro'; }} className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">Upgrade Sekarang</button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
+              <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-md p-8 shadow-2xl text-center" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full mx-auto flex items-center justify-center mb-6 shadow-lg shadow-green-500/20">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Selamat Datang di Visora!</h3>
+                  <p className="text-gray-400 text-sm mb-6">Pendaftaran Anda telah berhasil diproses. Saldo credits bonus awal telah ditambahkan ke akun Anda.</p>
+                  
+                  <div className="bg-white/5 rounded-2xl p-4 mb-8">
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Paket Aktif</p>
+                      <p className="text-lg font-bold text-white">{dbUser?.plan === 'pro' ? 'Pro Plan' : 'Basic Plan'}</p>
+                  </div>
+
+                  <button onClick={() => { localStorage.setItem('visora_welcomed', 'true'); setShowWelcomeModal(false); }} className="w-full py-4 rounded-xl bg-white text-black text-lg font-bold hover:bg-gray-200 transition-colors">
+                      Mulai Mendesain Sekarang
+                  </button>
+              </div>
+          </div>
       )}
 
       {/* Top Up Modal */}

@@ -7,14 +7,33 @@ import { useNavigate } from 'react-router-dom';
 
 export const BillingPage: React.FC = () => {
     const [user, setUser] = useState<any>(null);
+    const [dbUser, setDbUser] = useState<any>(null);
+    const [infiniteStatus, setInfiniteStatus] = useState<any>(null);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [showTopUp, setShowTopUp] = useState(false);
+    const [isExtending, setIsExtending] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (!session?.user) { navigate('/'); return; }
             setUser(session.user);
+
+            // Fetch DB User to check plan
+            const { data: dbUser } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+            setDbUser(dbUser);
+
+            // Fetch Infinite Status
+            try {
+                const res = await fetch('/api/generate-infinite-status', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) {
+                    setInfiniteStatus(await res.json());
+                }
+            } catch (e) {
+                console.error('Failed to fetch infinite status:', e);
+            }
         });
     }, [navigate]);
 
@@ -50,6 +69,43 @@ export const BillingPage: React.FC = () => {
         }
     };
 
+    const handleExtendInfinite = async () => {
+        setIsExtending(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+
+            const res = await fetch('/api/create-transaction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ 
+                    email: user.email, 
+                    username: user.user_metadata?.full_name, 
+                    paymentType: 'infinite_extend' 
+                })
+            });
+
+            const result = await res.json();
+            if (res.ok && result.data?.snapToken && window.snap) {
+                window.snap.pay(result.data.snapToken, {
+                    onSuccess: () => { window.location.reload(); },
+                    onPending: () => { setIsExtending(false); },
+                    onError: () => { setIsExtending(false); },
+                    onClose: () => { setIsExtending(false); },
+                });
+            } else {
+                alert(result.error || 'Gagal memproses transaksi.');
+                setIsExtending(false);
+            }
+        } catch (e) {
+            console.error(e);
+            setIsExtending(false);
+        }
+    };
+
     const statusColor: Record<string, string> = {
         success: 'text-green-400 bg-green-500/10',
         pending: 'text-yellow-400 bg-yellow-500/10',
@@ -81,6 +137,24 @@ export const BillingPage: React.FC = () => {
                         Top Up Credits
                     </button>
                 </div>
+
+                {/* Infinite Extend Section */}
+                {dbUser?.plan === 'pro' && infiniteStatus?.lifetimeCount >= 1000 && (
+                    <div className="bg-gradient-to-br from-orange-600/20 to-red-600/20 border border-orange-500/30 rounded-3xl p-6 mb-6">
+                        <div className="text-sm text-orange-400 font-bold uppercase tracking-wider mb-2">Infinite Mode Limit Reached</div>
+                        <p className="text-sm text-gray-300 mb-4">You have reached the 1000 lifetime generation limit for Infinite Mode. You can extend this limit to continue using Infinite Mode without limits.</p>
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold text-white">{formatRupiah(100000)}</span>
+                            <button
+                                onClick={handleExtendInfinite}
+                                disabled={isExtending}
+                                className="bg-orange-500 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-orange-600 active:scale-[0.98] transition-all disabled:opacity-50"
+                            >
+                                {isExtending ? 'Memproses...' : 'Perpanjang Infinite Limit'}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Transaction History */}
                 <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Riwayat Transaksi</h2>

@@ -18,8 +18,14 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
 
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
-                setUser(toAppUser(session.user));
-                ensureUserRow(session.user).catch(console.error);
+                Promise.resolve(ensureUserRow(session.user)).catch(console.error);
+                supabase.from('users').select('plan').eq('id', session.user.id).single().then(({ data }) => {
+                    if (data && (!data.plan || data.plan === 'none')) {
+                        window.location.href = '/formorderauth';
+                        return;
+                    }
+                    setUser(toAppUser(session.user));
+                }, () => setUser(toAppUser(session.user)));
             }
             setLoading(false);
         }).catch(() => setLoading(false));
@@ -30,8 +36,14 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
                 return;
             }
             if (session?.user) {
-                setUser(toAppUser(session.user));
-                ensureUserRow(session.user).catch(console.error);
+                Promise.resolve(ensureUserRow(session.user)).catch(console.error);
+                supabase.from('users').select('plan').eq('id', session.user.id).single().then(({ data }) => {
+                    if (data && (!data.plan || data.plan === 'none')) {
+                        window.location.href = '/formorderauth';
+                        return;
+                    }
+                    setUser(toAppUser(session.user));
+                }, () => setUser(toAppUser(session.user)));
             } else {
                 setUser(null);
             }

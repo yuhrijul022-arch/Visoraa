@@ -26,6 +26,29 @@ export const UnifiedCheckoutComponent: React.FC = () => {
     const [userCount, setUserCount] = useState(getUserCount());
     const [notifData, setNotifData] = useState<{ name: string; city: string } | null>(null);
 
+    const [plan, setPlan] = useState<'basic' | 'pro'>(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('plan') === 'pro' ? 'pro' : 'basic';
+    });
+    
+    const PLAN_BENEFITS = {
+        basic: [
+            "Generate desain statis & dinamis",
+            "Akses ke seluruh template dasar",
+            "Resolusi standar (1080p)",
+            "Akses selamanya (lifetime)",
+        ],
+        pro: [
+            "Semua fitur Basic",
+            "Akses fitur Infinite Mode",
+            "Generate gambar tanpa limit harian (30/hari)",
+            "Resolusi tinggi (4K & Ultra HD)",
+            "Prioritas antrean server (jalur cepat)",
+            "Akses eksklusif template Pro",
+            "Akses selamanya (lifetime)",
+        ],
+    };
+
     // ── Meta Pixel ── fire on load
     useEffect(() => {
         initPixel();
@@ -104,7 +127,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             const resp = await fetch('/api/create-transaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, username: name, password, promoCode: promoCode || undefined }),
+                body: JSON.stringify({ email, username: name, password, promoCode: promoCode || undefined, planType: plan }),
             });
             const result = await resp.json();
             if (!resp.ok) {
@@ -119,7 +142,8 @@ export const UnifiedCheckoutComponent: React.FC = () => {
 
             // Fire AddPaymentInfo when Snap opens
             const paymentEventId = generateEventId();
-            trackAddPaymentInfo(paymentEventId, 99000);
+            const planValue = plan === 'pro' ? 145000 : 99000;
+            trackAddPaymentInfo(paymentEventId, planValue);
 
             // Send CAPI AddPaymentInfo
             try {
@@ -131,7 +155,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                         eventName: 'AddPaymentInfo',
                         eventId: paymentEventId,
                         email,
-                        value: 99000,
+                        value: planValue,
                         sourceUrl: window.location.href,
                         userAgent: navigator.userAgent,
                         fbp, fbc,
@@ -219,10 +243,10 @@ export const UnifiedCheckoutComponent: React.FC = () => {
 
                 {/* ── SECTION C: CHECKLIST BENEFITS ── */}
                 <div style={{ marginBottom: 28 }}>
-                    {BENEFITS.map((b, i) => (
+                    {PLAN_BENEFITS[plan].map((b, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12, fontSize: '1rem' }}>
-                            <span style={{ color: '#34C759', fontWeight: 900, lineHeight: 1.2 }}>✓</span>
-                            <span>{b.bold ? <strong>{b.text}</strong> : b.text}</span>
+                            <span style={{ color: plan === 'pro' ? '#34C759' : '#34C759', fontWeight: 900, lineHeight: 1.2 }}>✓</span>
+                            <span style={{ color: '#1d1d1f', fontWeight: 500 }}>{b}</span>
                         </div>
                     ))}
                 </div>
@@ -258,6 +282,46 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                         <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password (min 6 karakter)" style={inputStyle} />
                     </div>
 
+                    {/* Plan Selection Toggle */}
+                    <div style={{ marginBottom: 20 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 10 }}>Pilih Paket:</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {/* Basic */}
+                            <div onClick={() => setPlan('basic')} style={{ 
+                                border: `2px solid ${plan === 'basic' ? '#0071e3' : 'rgba(0,0,0,0.1)'}`, 
+                                borderRadius: 16, padding: '16px 14px', cursor: 'pointer',
+                                background: plan === 'basic' ? 'rgba(0,113,227,0.05)' : '#fff', transition: 'all 0.2s',
+                                display: 'flex', flexDirection: 'column', gap: 4
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: plan === 'basic' ? '5px solid #0071e3' : '2px solid rgba(0,0,0,0.2)', transition: 'all 0.2s' }} />
+                                        <strong style={{ fontSize: '1.05rem', color: '#111' }}>Basic</strong>
+                                    </div>
+                                    <span style={{ fontWeight: 700, color: '#111' }}>Rp99rb</span>
+                                </div>
+                                <span style={{ fontSize: '0.8rem', color: '#444', paddingLeft: 26 }}>1000+ Template & Standard Resolution</span>
+                            </div>
+
+                            {/* Pro */}
+                            <div onClick={() => setPlan('pro')} style={{ 
+                                border: `2px solid ${plan === 'pro' ? '#0071e3' : 'rgba(255,255,255,0.1)'}`, 
+                                borderRadius: 16, padding: '16px 14px', cursor: 'pointer',
+                                background: plan === 'pro' ? '#1a1a24' : '#111', transition: 'all 0.2s',
+                                display: 'flex', flexDirection: 'column', gap: 4
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: plan === 'pro' ? '5px solid #0071e3' : '2px solid rgba(255,255,255,0.4)', transition: 'all 0.2s' }} />
+                                        <strong style={{ fontSize: '1.05rem', color: '#fff' }}>Pro</strong>
+                                    </div>
+                                    <span style={{ fontWeight: 700, color: '#fff' }}>Rp145rb</span>
+                                </div>
+                                <span style={{ fontSize: '0.8rem', color: '#ccc', paddingLeft: 26 }}>Infinite Generate & 4K Resolution</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Promo */}
                     {!showPromo ? (
                         <button onClick={() => setShowPromo(true)} style={{ fontSize: '0.85rem', color: '#0071e3', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, display: 'block' }}>
@@ -270,15 +334,15 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                     {/* Order Summary */}
                     <div style={{ background: '#F5F5F7', borderRadius: 16, padding: '16px 20px', marginBottom: 20 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', marginBottom: 6 }}>
-                            <span style={{ color: '#86868b' }}>Visora - Smart Visual</span>
-                            <span style={{ color: '#86868b', textDecoration: 'line-through', fontSize: '0.85rem' }}>Rp350.000</span>
+                            <span style={{ color: '#86868b' }}>Visora - {plan === 'pro' ? 'Pro Plan' : 'Basic Plan'}</span>
+                            <span style={{ color: '#86868b', textDecoration: 'line-through', fontSize: '0.85rem' }}>{plan === 'pro' ? 'Rp450.000' : 'Rp350.000'}</span>
                         </div>
                         <div style={{ fontSize: '0.85rem', color: '#34C759', marginBottom: 8 }}>
-                            🎉 Diskon promo 150 user pertama (-Rp251.000)
+                            🎉 Diskon promo 150 user pertama (-{plan === 'pro' ? 'Rp305.000' : 'Rp251.000'})
                         </div>
                         <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ fontWeight: 700 }}>Total</span>
-                            <span style={{ fontWeight: 700, fontSize: '1.15rem' }}>{formatRupiah(99000)}</span>
+                            <span style={{ fontWeight: 700, fontSize: '1.15rem' }}>{formatRupiah(plan === 'pro' ? 145000 : 99000)}</span>
                         </div>
                     </div>
 

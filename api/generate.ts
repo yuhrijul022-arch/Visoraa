@@ -1,5 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { eq } from 'drizzle-orm';
+import { db } from '../src/lib/db';
+import { users } from '../src/db/schema/users';
+import { calculateCost } from './_lib/credits/costCalculator';
+import { PlanType } from './_lib/payment/types';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -147,7 +152,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const modelConfig = MODELS[mode || 'standard'] || MODELS.standard;
         const numImages = Math.min(Math.max(Number(req.body.qty) || 1, 1), 4);
-        const totalCreditCost = numImages * modelConfig.creditCost;
+        
+        // Fetch user plan and credits using Drizzle
+        const dbUser = await db.query.users.findFirst({ where: eq(users.id, uid) });
+        if (!dbUser) return res.status(404).json({ error: 'User not found.' });
+
+        // Calculate credit cost
+        const combinedUserInput = `${req.body.customPrompt || ''} ${req.body.headline || ''} ${req.body.benefit || ''}`;
+        const baseCostPerImage = calculateCost(combinedUserInput, (dbUser.plan as PlanType) || 'basic');
+        const totalCreditCost = numImages * baseCostPerImage;
 
         // Rate limit
         let rateData = await getRateLimitData(uid);
@@ -183,10 +196,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Credit check
-        const { data: userData, error: userError } = await supabase.from('users').select('credits').eq('id', uid).single();
-        if (userError || !userData) return res.status(404).json({ error: 'User not found.' });
-        if ((userData as any).credits < totalCreditCost) {
-            return res.status(402).json({ error: `Credit tidak cukup. Tersedia: ${(userData as any).credits}, dibutuhkan: ${totalCreditCost}` });
+        if (dbUser.credits < totalCreditCost) {
+            return res.status(402).json({ error: `Credit tidak cukup. Tersedia: ${dbUser.credits}, dibutuhkan: ${totalCreditCost}` });
         }
 
         // Set generating lock
@@ -302,10 +313,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Deduct credits only for successful generations
         if (successCount > 0) {
-            const actualCost = successCount * modelConfig.creditCost;
+            const actualCost = successCount * baseCostPerImage;
             const { error: rpcError } = await supabase.rpc('deduct_credits_safe', { p_user_id: uid, p_amount: actualCost });
             if (rpcError) {
-                await supabase.from('users').update({ credits: Math.max(0, (userData as any).credits - actualCost) } as never).eq('id', uid);
+                await db.update(users).set({ credits: Math.max(0, dbUser.credits - actualCost) }).where(eq(users.id, uid));
             }
 
             // Log generation

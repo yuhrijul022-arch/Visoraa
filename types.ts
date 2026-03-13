@@ -79,7 +79,7 @@ export interface DesignInputs {
   customPrompt: string;
   textMode: 'auto' | 'on' | 'off';
   quantity: number;
-  mode: 'standard' | 'pro';
+  mode: 'standard' | 'pro' | 'infinite';
 }
 
 export interface FileData {

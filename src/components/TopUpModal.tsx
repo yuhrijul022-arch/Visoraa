@@ -9,13 +9,14 @@ declare global {
 }
 
 const PRESET_PACKAGES = [
-    { credits: 5, price: 25000 },
-    { credits: 10, price: 50000 },
-    { credits: 25, price: 125000 },
-    { credits: 50, price: 250000 },
+    { credits: 129, price: 25000 },
+    { credits: 257, price: 50000 },
+    { credits: 513, price: 100000 },
+    { credits: 1026, price: 200000 },
+    { credits: 2565, price: 500000 },
 ];
 
-const PRICE_PER_CREDIT = 5000;
+const PRICE_PER_CREDIT = 195;
 
 interface TopUpModalProps {
     isOpen: boolean;
@@ -26,7 +27,7 @@ interface TopUpModalProps {
 export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const { toast } = useToast();
     const [selectedPkg, setSelectedPkg] = useState<number | 'custom'>(1);
-    const [customQty, setCustomQty] = useState<string>('');
+    const [customAmountStr, setCustomAmountStr] = useState<string>('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -45,13 +46,19 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
 
     const getCreditsToBuy = () => {
         if (selectedPkg === 'custom') {
-            const qty = parseInt(customQty);
-            return isNaN(qty) || qty < 1 ? 0 : qty;
+            const amount = parseInt(customAmountStr);
+            return isNaN(amount) || amount < 10000 ? 0 : Math.ceil(amount / PRICE_PER_CREDIT);
         }
         return PRESET_PACKAGES[selectedPkg].credits;
     };
 
-    const getTotalPrice = () => getCreditsToBuy() * PRICE_PER_CREDIT;
+    const getTotalPrice = () => {
+        if (selectedPkg === 'custom') {
+            const amount = parseInt(customAmountStr);
+            return isNaN(amount) ? 0 : amount;
+        }
+        return PRESET_PACKAGES[selectedPkg].price;
+    };
 
     const handlePurchase = async () => {
         const credits = getCreditsToBuy();
@@ -72,7 +79,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ creditsQty: credits }),
+                body: JSON.stringify({ creditsQty: credits, amount: getTotalPrice() }),
             });
 
             const result = await resp.json();
@@ -161,7 +168,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                             }`}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[13px] font-medium text-white/90">Custom Amount</span>
+                            <span className="text-[13px] font-medium text-white/90">Custom Amount (Min. Rp10.000)</span>
                             {selectedPkg === 'custom' && (
                                 <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
                             )}
@@ -169,19 +176,19 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                         <div className="flex items-center gap-3">
                             <input
                                 type="number"
-                                min="1"
-                                placeholder="0"
-                                value={customQty}
+                                min="10000"
+                                placeholder="10000"
+                                value={customAmountStr}
                                 onChange={(e) => {
-                                    setCustomQty(e.target.value);
+                                    setCustomAmountStr(e.target.value);
                                     if (selectedPkg !== 'custom') setSelectedPkg('custom');
                                 }}
-                                className="w-24 bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-lg font-semibold text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-gray-600"
+                                className="w-28 bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-lg font-semibold text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-gray-600"
                             />
                             <div className="flex-1">
-                                <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Credits</div>
+                                <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Mendapatkan</div>
                                 <div className="text-sm font-medium text-white/80 mt-1">
-                                    {selectedPkg === 'custom' && customQty ? formatRupiah(getTotalPrice()) : 'Rp0'}
+                                    {selectedPkg === 'custom' && customAmountStr ? `${getCreditsToBuy()} Credits` : '0 Credits'}
                                 </div>
                             </div>
                         </div>
