@@ -90,7 +90,60 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
     const targetUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-    if (action === 'add_credits') {
+    if (action === 'create_user') {
+        const { email, password, name, plan = 'basic', credits = 0 } = value;
+        if (!email || !password || !name) return res.status(400).json({ error: 'Missing user fields' });
+
+        const { data: authData, error: authError } = await supabase!.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { full_name: name, name: name }
+        });
+
+        if (authError || !authData.user) {
+            return res.status(400).json({ error: authError?.message || 'Failed to create auth user' });
+        }
+
+        await db.insert(users).values({
+            id: authData.user.id,
+            email,
+            name,
+            plan,
+            credits: parseInt(credits) || 0,
+            infiniteEnabled: plan === 'pro'
+        });
+        
+        return res.status(200).json({ success: true, user: authData.user });
+
+    } else if (action === 'update_user') {
+        const { name, email, plan, credits } = value;
+        
+        // 1. Update Supabase Auth if email/name changed
+        const updateData: any = {};
+        if (email) updateData.email = email;
+        if (name) updateData.user_metadata = { full_name: name, name: name };
+        
+        if (Object.keys(updateData).length > 0) {
+            const { error: authError } = await supabase!.auth.admin.updateUserById(userId, updateData);
+            if (authError) return res.status(400).json({ error: authError.message });
+        }
+
+        // 2. Update Drizzle Public Record
+        const drizzleUpdate: any = {};
+        if (name !== undefined) drizzleUpdate.name = name;
+        if (email !== undefined) drizzleUpdate.email = email;
+        if (plan !== undefined) {
+             drizzleUpdate.plan = plan;
+             drizzleUpdate.infiniteEnabled = plan === 'pro';
+        }
+        if (credits !== undefined) drizzleUpdate.credits = parseInt(credits) || 0;
+
+        if (Object.keys(drizzleUpdate).length > 0) {
+            await db.update(users).set(drizzleUpdate).where(eq(users.id, userId));
+        }
+
+    } else if (action === 'add_credits') {
         const amount = parseInt(value, 10);
         if (isNaN(amount)) return res.status(400).json({ error: 'Invalid credits' });
         await db.update(users).set({ credits: (targetUser.credits || 0) + amount }).where(eq(users.id, userId));
@@ -101,8 +154,13 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
             infiniteEnabled: newPlan === 'pro'
         }).where(eq(users.id, userId));
     } else if (action === 'delete') {
+        // Delete from Drizzle first (due to foreign keys like payments etc it might need CASCADE eventually, but for now we try simple delete)
         await db.delete(users).where(eq(users.id, userId));
-        if (supabase) await supabase.auth.admin.deleteUser(userId);
+        // Delete from Supabase Auth
+        if (supabase) {
+            const { error: delErr } = await supabase.auth.admin.deleteUser(userId);
+            if (delErr) console.error("Supabase delete user error:", delErr);
+        }
     } else {
         return res.status(400).json({ error: 'Unknown action' });
     }
