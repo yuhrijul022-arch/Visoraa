@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from "../db";
-import { infiniteUsage } from '../../../src/db/schema/infiniteUsage';
+import { infiniteUsage } from '../../../src/db/schema/index';
 
 export const DAILY_LIMIT = 30;
 export const LIFETIME_LIMIT = 1000;

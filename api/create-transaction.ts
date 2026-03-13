@@ -2,8 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
 import { db } from './_lib/db';
-import { payments } from '../src/db/schema/payments';
-import { users } from '../src/db/schema/users';
+import { payments, users } from '../src/db/schema/index';
 import { getActiveProvider } from './_lib/payment/factory';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';

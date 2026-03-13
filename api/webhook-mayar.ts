@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
 import { db } from './_lib/db';
-import { payments } from '../src/db/schema/payments';
-import { paymentGatewayConfig } from '../src/db/schema/paymentGateway';
+import { payments, paymentGatewayConfig } from '../src/db/schema/index';
 import { decrypt } from './_lib/payment/crypto';
 import { MayarProvider } from './_lib/payment/mayar';
 import { fulfillPayment } from './_lib/payment/fulfill';

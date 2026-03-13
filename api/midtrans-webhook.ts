@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { db } from './_lib/db';
-import { payments } from '../src/db/schema/payments';
+import { payments } from '../src/db/schema/index';
 import { getActiveProvider } from './_lib/payment/factory';
 import { MidtransProvider } from './_lib/payment/midtrans';
 import { fulfillPayment } from './_lib/payment/fulfill';
