@@ -166,6 +166,13 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
         await db.delete(payments).where(eq(payments.userId, userId));
         await db.delete(adminLogs).where(or(eq(adminLogs.adminId, userId), eq(adminLogs.targetUserId, userId)));
         
+        // Also delete from Supabase-only tables to satisfy foreign-key constraints
+        if (supabase) {
+            await supabase.from('generation_logs').delete().eq('user_id', userId);
+            await supabase.from('transactions').delete().eq('user_id', userId);
+            await supabase.from('generation_rate_limits').delete().eq('user_id', userId);
+        }
+
         // Delete from Drizzle
         await db.delete(users).where(eq(users.id, userId));
         // Delete from Supabase Auth
