@@ -98,9 +98,13 @@ export const FormOrderAuth: React.FC = () => {
             } catch { /* non-blocking */ }
 
             const { snapToken, gateway, redirectUrl, orderId } = result.data;
+            
+            // Save order ID and snapshot token for both gateways to allow status checks & resumes on the /pending page
+            localStorage.setItem('visora_pending_order_id', orderId);
+            localStorage.setItem('visora_pending_snap_token', snapToken || '');
+
             if (gateway === 'mayar' && redirectUrl) {
                 localStorage.setItem('visora_pending_url', redirectUrl);
-                localStorage.setItem('visora_pending_order_id', orderId);
                 window.location.href = redirectUrl;
                 return;
             }

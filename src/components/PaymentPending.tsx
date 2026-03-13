@@ -13,15 +13,18 @@ export const PaymentPending: React.FC = () => {
     const [pendingEmail, setPendingEmail] = useState('');
     const [pendingOrderId, setPendingOrderId] = useState('');
     const [pendingUrl, setPendingUrl] = useState('');
+    const [pendingSnapToken, setPendingSnapToken] = useState('');
 
     useEffect(() => {
         const email = localStorage.getItem('visora_pending_email') || '';
         const orderId = localStorage.getItem('visora_pending_order_id') || new URLSearchParams(window.location.search).get('orderId') || '';
         const url = localStorage.getItem('visora_pending_url') || '';
+        const snapToken = localStorage.getItem('visora_pending_snap_token') || '';
 
         setPendingEmail(email);
         setPendingOrderId(orderId);
         setPendingUrl(url);
+        setPendingSnapToken(snapToken);
         
         // Auto-check on load if we have an order id
         if (orderId) {
@@ -54,10 +57,11 @@ export const PaymentPending: React.FC = () => {
                         localStorage.removeItem('visora_pending_pass');
                         localStorage.removeItem('visora_pending_url');
                         localStorage.removeItem('visora_pending_order_id');
+                        localStorage.removeItem('visora_pending_snap_token');
                         window.location.href = '/dashboard';
                     } else {
-                        // If auto-login fails, redirect to login page
-                        window.location.href = '/login';
+                        // If auto-login fails, redirect to dashboard so AuthGate can show login page
+                        window.location.href = '/dashboard';
                     }
                 } else {
                     // They might already be logged in (e.g. extending infinite plan)
@@ -65,7 +69,7 @@ export const PaymentPending: React.FC = () => {
                     if (session) {
                         window.location.href = '/dashboard';
                     } else {
-                        window.location.href = '/login';
+                        window.location.href = '/dashboard';
                     }
                 }
             } else {
@@ -83,9 +87,29 @@ export const PaymentPending: React.FC = () => {
         }
     };
 
+    // ── Load Midtrans Snap ──
+    useEffect(() => {
+        const isProd = import.meta.env.VITE_MIDTRANS_IS_PROD === 'true';
+        const clientKey = isProd
+            ? (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_PROD || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '')
+            : (import.meta.env.VITE_MIDTRANS_CLIENT_KEY_SANDBOX || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || '');
+        if (document.querySelector('script[src*="snap.js"]')) return;
+        const script = document.createElement('script');
+        script.src = isProd ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', clientKey);
+        script.async = true;
+        document.head.appendChild(script);
+    }, []);
+
     const handleContinuePayment = () => {
         if (pendingUrl) {
             window.location.href = pendingUrl;
+        } else if (pendingSnapToken && window.snap) {
+            window.snap.pay(pendingSnapToken, {
+                onSuccess: () => { checkStatus(pendingOrderId, pendingEmail, true); },
+                onPending: () => { toast({ type: 'info', title: 'Pembayaran Pending', description: 'Selesaikan pembayaran sebelum batas waktu.' }); },
+                onError: () => { toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' }); },
+            });
         } else {
             toast({ type: 'warning', title: 'Link Tidak Ditemukan', description: 'Silakan pesan ulang dari halaman form.' });
             navigate('/formorder');
