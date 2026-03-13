@@ -90,7 +90,18 @@ export const BillingPage: React.FC = () => {
             });
 
             const result = await res.json();
-            if (res.ok && result.data?.snapToken && window.snap) {
+            if (!res.ok) {
+                alert(result.error || 'Gagal memproses transaksi.');
+                setIsExtending(false);
+                return;
+            }
+
+            if (result.data?.gateway === 'mayar' && result.data?.redirectUrl) {
+                window.location.href = result.data.redirectUrl;
+                return;
+            }
+
+            if (result.data?.snapToken && window.snap) {
                 window.snap.pay(result.data.snapToken, {
                     onSuccess: () => { window.location.reload(); },
                     onPending: () => { setIsExtending(false); },

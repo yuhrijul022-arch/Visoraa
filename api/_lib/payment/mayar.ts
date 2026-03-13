@@ -17,9 +17,8 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {
-    // Mayar Headless API: POST /hl/v1/payment
-    // (NOT /payment/create — that endpoint doesn't exist)
-    const url = `${MAYAR_BASE_URL}/payment`;
+    // Mayar Headless API: POST /hl/v1/payment/create
+    const url = `${MAYAR_BASE_URL}/payment/create`;
     const nameStr = params.name || "Visora User";
     const siteUrl = process.env.VITE_SITE_URL || "https://visoraa.vercel.app";
 
@@ -96,4 +95,3 @@ export class MayarProvider implements PaymentProvider {
     return signature === expectedSignature;
   }
 }
-

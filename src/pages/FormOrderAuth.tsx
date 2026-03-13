@@ -97,7 +97,12 @@ export const FormOrderAuth: React.FC = () => {
                 });
             } catch { /* non-blocking */ }
 
-            const { snapToken } = result.data;
+            const { snapToken, gateway, redirectUrl } = result.data;
+            if (gateway === 'mayar' && redirectUrl) {
+                window.location.href = redirectUrl;
+                return;
+            }
+
             if (window.snap) {
                 window.snap.pay(snapToken, {
                     onSuccess: () => {

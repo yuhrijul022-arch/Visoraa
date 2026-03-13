@@ -60,7 +60,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
         return PRESET_PACKAGES[selectedPkg].price;
     };
 
-    const handlePurchase = async () => {
+        const handlePurchase = async () => {
         const credits = getCreditsToBuy();
         if (credits < 1) return;
 
@@ -82,15 +82,21 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                 body: JSON.stringify({ creditsQty: credits, amount: getTotalPrice() }),
             });
 
-            const result = await resp.json();
+            const resultResponse = await resp.json();
             if (!resp.ok) {
-                toast({ type: 'error', title: 'Gagal', description: result.error });
+                toast({ type: 'error', title: 'Gagal', description: resultResponse.error });
                 setLoading(false);
                 return;
             }
 
+            const result = resultResponse.data || resultResponse;
+            if (result.gateway === 'mayar' && result.redirectUrl) {
+                window.location.href = result.redirectUrl;
+                return;
+            }
+
             if (window.snap) {
-                window.snap.pay(result.snapToken, {
+                window.snap.pay(result.snapToken || result.token, {
                     onSuccess: () => {
                         toast({ type: 'success', title: 'Berhasil!', description: `${credits} credits ditambahkan.` });
                         onSuccess();
