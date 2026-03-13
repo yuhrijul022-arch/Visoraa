@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq, ilike, or } from 'drizzle-orm';
 import { db } from './_lib/db.js';
-import { users, payments, paymentGatewayConfig, apiKeys } from '../src/db/schema/index.js';
+import { users, payments, paymentGatewayConfig, apiKeys, creditsTransactions, infiniteUsage, adminLogs } from '../src/db/schema/index.js';
 import { encrypt } from './_lib/payment/crypto.js';
 
 // Setup Supabase
@@ -160,7 +160,13 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
             infiniteEnabled: newPlan === 'pro'
         }).where(eq(users.id, userId));
     } else if (action === 'delete') {
-        // Delete from Drizzle first (due to foreign keys like payments etc it might need CASCADE eventually, but for now we try simple delete)
+        // Cascade delete dependent records due to active foreign key constraints
+        await db.delete(creditsTransactions).where(eq(creditsTransactions.userId, userId));
+        await db.delete(infiniteUsage).where(eq(infiniteUsage.userId, userId));
+        await db.delete(payments).where(eq(payments.userId, userId));
+        await db.delete(adminLogs).where(or(eq(adminLogs.adminId, userId), eq(adminLogs.targetUserId, userId)));
+        
+        // Delete from Drizzle
         await db.delete(users).where(eq(users.id, userId));
         // Delete from Supabase Auth
         if (supabase) {
