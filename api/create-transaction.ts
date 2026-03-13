@@ -98,9 +98,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const totalPrice = Math.max(basePrice - discountAmount, 1000); // Min Rp1000 for Midtrans
         const orderId = `VIS-${paymentType === 'infinite_extend' ? 'EXTEND' : 'SIGNUP'}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
-        const gatewayConfig = await getActiveProvider();
-        const provider = gatewayConfig.provider;
-        const gatewayName = gatewayConfig.name;
+        const provider = await getActiveProvider();
+        const gatewayName = process.env.ACTIVE_GATEWAY === 'mayar' ? 'mayar' : 'midtrans';
 
         const result = await provider.createTransaction({
             userId: userId as string,

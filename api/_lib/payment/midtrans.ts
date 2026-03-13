@@ -5,11 +5,9 @@ export class MidtransProvider implements PaymentProvider {
   private isProd: boolean;
   private serverKey: string;
 
-  constructor() {
+  constructor({ serverKey, clientKey }: { serverKey: string; clientKey: string }) {
     this.isProd = process.env.MIDTRANS_IS_PROD === "true";
-    this.serverKey = this.isProd
-      ? process.env.MIDTRANS_SERVER_KEY_PROD || process.env.MIDTRANS_SERVER_KEY!
-      : process.env.MIDTRANS_SERVER_KEY_SANDBOX || process.env.MIDTRANS_SERVER_KEY!;
+    this.serverKey = serverKey;
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {

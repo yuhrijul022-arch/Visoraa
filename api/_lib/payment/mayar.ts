@@ -5,7 +5,7 @@ export class MayarProvider implements PaymentProvider {
   private serverKey: string;
   private webhookSecret: string;
 
-  constructor(serverKey: string, webhookSecret: string) {
+  constructor({ serverKey, webhookSecret }: { serverKey: string; webhookSecret: string }) {
     this.serverKey = serverKey;
     this.webhookSecret = webhookSecret;
   }

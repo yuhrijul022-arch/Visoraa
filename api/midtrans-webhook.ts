@@ -37,7 +37,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('Webhook received:', { orderId: rawOrderId, status: transactionStatus });
 
         // Instantiate MidtransProvider for legacy and modern verification
-        const midtransProvider = new MidtransProvider();
+        const midtransProvider = new MidtransProvider({
+            serverKey: process.env.MIDTRANS_SERVER_KEY_PROD || process.env.MIDTRANS_SERVER_KEY_SANDBOX || process.env.MIDTRANS_SERVER_KEY!,
+            clientKey: process.env.MIDTRANS_CLIENT_KEY_PROD || process.env.MIDTRANS_CLIENT_KEY_SANDBOX || process.env.MIDTRANS_CLIENT_KEY!
+        });
         const isValidSignature = await midtransProvider.verifyWebhook(notification, signatureKey);
 
         if (!isValidSignature) {
