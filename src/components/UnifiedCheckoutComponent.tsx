@@ -100,32 +100,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         return () => clearTimeout(timeout);
     }, []);
 
-    // ── Recovery: auto-login ONLY if payment was success ──
-    useEffect(() => {
-        const savedEmail = localStorage.getItem('visora_pending_email');
-        const savedPass = localStorage.getItem('visora_pending_pass');
-        const params = new URLSearchParams(window.location.search);
-        
-        if (savedEmail && savedPass) {
-            if (params.get('payment') === 'success') {
-                toast({ type: 'success', title: 'Verifikasi...', description: 'Sedang masuk ke akun...' });
-                supabase.auth.signInWithPassword({ email: savedEmail, password: savedPass }).then(({ error }) => {
-                    localStorage.removeItem('visora_pending_email');
-                    localStorage.removeItem('visora_pending_pass');
-                    if (!error) {
-                        window.location.href = '/dashboard';
-                    } else {
-                        toast({ type: 'error', title: 'Login Gagal', description: 'Gagal otomatis. Silakan login manual.' });
-                        window.location.href = '/login';
-                    }
-                });
-            } else if (params.get('payment') !== null) {
-                // Return from cancelled checkout etc. Clear credentials so they aren't auto-logged in accidentally.
-                localStorage.removeItem('visora_pending_email');
-                localStorage.removeItem('visora_pending_pass');
-            }
-        }
-    }, [toast]);
+
 
     const handleSubmit = async () => {
         if (!name || !email || !password) {
@@ -177,8 +152,10 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                 });
             } catch { /* non-blocking */ }
 
-            const { snapToken, gateway, redirectUrl } = result.data;
+            const { snapToken, gateway, redirectUrl, orderId } = result.data;
             if (gateway === 'mayar' && redirectUrl) {
+                localStorage.setItem('visora_pending_url', redirectUrl);
+                localStorage.setItem('visora_pending_order_id', orderId);
                 window.location.href = redirectUrl;
                 return;
             }

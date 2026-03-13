@@ -97,8 +97,10 @@ export const FormOrderAuth: React.FC = () => {
                 });
             } catch { /* non-blocking */ }
 
-            const { snapToken, gateway, redirectUrl } = result.data;
+            const { snapToken, gateway, redirectUrl, orderId } = result.data;
             if (gateway === 'mayar' && redirectUrl) {
+                localStorage.setItem('visora_pending_url', redirectUrl);
+                localStorage.setItem('visora_pending_order_id', orderId);
                 window.location.href = redirectUrl;
                 return;
             }

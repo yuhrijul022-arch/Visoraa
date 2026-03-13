@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             amountIdr: totalPrice,
             paymentType: paymentType,
             planType: paymentType === 'plan' ? planType : undefined,
-            redirectPath: (!authHeader && paymentType === 'plan') ? '/formorder' : '/dashboard'
+            redirectPath: (!authHeader && paymentType === 'plan') ? '/pending' : '/dashboard'
         });
 
         // Ensure user row in Drizzle (ignored if exists)
