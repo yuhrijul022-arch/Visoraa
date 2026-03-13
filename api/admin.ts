@@ -75,7 +75,7 @@ async function handleUsers(req: VercelRequest, res: VercelResponse) {
             or(ilike(users.name, `%${search}%`), ilike(users.email, `%${search}%`))
         ).orderBy(users.createdAt);
     } else {
-        usersList = await db.select().from(users).orderBy(users.createdAt).limit(100);
+        usersList = await db.select().from(users).orderBy(users.createdAt).limit(5000);
     }
 
     return res.status(200).json({ users: usersList });
