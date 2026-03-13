@@ -10,6 +10,7 @@ export interface CreateTransactionParams {
   paymentType: PaymentType;
   creditsQty?: number;
   planType?: PlanType;
+  redirectPath?: string;
 }
 
 export interface PaymentProviderResult {

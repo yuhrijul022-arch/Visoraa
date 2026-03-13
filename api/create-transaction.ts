@@ -96,7 +96,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const totalPrice = Math.max(basePrice - discountAmount, 1000); // Min Rp1000 for Midtrans
-        const orderId = `VIS-${paymentType === 'infinite_extend' ? 'EXTEND' : 'SIGNUP'}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+        let orderIdPrefix = 'SIGNUP';
+        if (paymentType === 'infinite_extend') orderIdPrefix = 'EXTEND';
+        else if (paymentType === 'topup') orderIdPrefix = `TOPUP-${totalPrice}`;
+        else if (paymentType === 'plan') orderIdPrefix = `SIGNUP-${(planType || 'BASIC').toUpperCase()}`;
+
+        const orderId = `VIS-${orderIdPrefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
         const provider = await getActiveProvider();
         const gatewayName = process.env.ACTIVE_GATEWAY === 'mayar' ? 'mayar' : 'midtrans';
@@ -108,7 +113,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             name: username || 'Visora User',
             amountIdr: totalPrice,
             paymentType: paymentType,
-            planType: paymentType === 'plan' ? planType : undefined
+            planType: paymentType === 'plan' ? planType : undefined,
+            redirectPath: (!authHeader && paymentType === 'plan') ? '/formorder' : '/dashboard'
         });
 
         // Ensure user row in Drizzle (ignored if exists)
