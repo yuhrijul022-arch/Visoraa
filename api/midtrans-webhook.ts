@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { db } from './_lib/db';
+import { db } from '../src/lib/db';
 import { payments } from '../src/db/schema/payments';
 import { getActiveProvider } from './_lib/payment/factory';
 import { MidtransProvider } from './_lib/payment/midtrans';
