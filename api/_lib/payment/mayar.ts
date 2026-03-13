@@ -11,7 +11,7 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {
-    const url = "https://api.mayar.id/hl/v1/payment/create";
+    const url = "https://mayar.id/api/v2/payment-links";
     const nameStr = params.name || "Visora User";
 
     const body = {

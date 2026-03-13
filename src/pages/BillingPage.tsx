@@ -119,7 +119,7 @@ export const BillingPage: React.FC = () => {
             <div className="max-w-2xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                    <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1">
+                    <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                         Kembali
                     </button>
