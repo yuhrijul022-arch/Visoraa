@@ -153,9 +153,12 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             } catch { /* non-blocking */ }
 
             const { snapToken, gateway, redirectUrl, orderId } = result.data;
+            
+            // Save order ID for both gateways to allow status checks on the /pending page
+            localStorage.setItem('visora_pending_order_id', orderId);
+
             if (gateway === 'mayar' && redirectUrl) {
                 localStorage.setItem('visora_pending_url', redirectUrl);
-                localStorage.setItem('visora_pending_order_id', orderId);
                 window.location.href = redirectUrl;
                 return;
             }
