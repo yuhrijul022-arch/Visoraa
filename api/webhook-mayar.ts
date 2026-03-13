@@ -22,9 +22,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(200).send('OK');
 
     try {
-        const signature = (req.headers['mayar-signature'] || req.headers['x-mayar-signature']) as string | undefined;
+        const signature = (
+            req.headers['x-callback-token'] || 
+            req.headers['mayar-signature'] || 
+            req.headers['x-mayar-signature']
+        ) as string | undefined;
+        
         if (!signature) {
-            console.error('[Error] Missing signature header. Mayar did not send mayar-signature.');
+            console.error('[Error] Missing signature header. Mayar did not send x-callback-token or mayar-signature.');
             return res.status(401).send('Missing signature');
         }
 
