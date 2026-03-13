@@ -34,18 +34,23 @@ export function isComplexPrompt(prompt: string): boolean {
 /**
  * Calculates token/credit cost based on user plan and prompt complexity
  * 
- * Standard Rules (Basic):
+ * Standard Rules:
  * - Simple: 30 credits
  * - Complex: 37 credits
  * 
  * Pro Rules:
  * - Simple: 55 credits
  * - Complex: 65 credits
+ * 
+ * Infinite Rules:
+ * - Always 0 credits
  */
-export function calculateCost(prompt: string, plan: PlanType): number {
+export function calculateCost(prompt: string, mode: 'standard' | 'pro' | 'infinite'): number {
     const isComplex = isComplexPrompt(prompt);
 
-    if (plan === 'pro') {
+    if (mode === 'infinite') return 0;
+
+    if (mode === 'pro') {
         return isComplex ? 65 : 55;
     } else {
         return isComplex ? 37 : 30;

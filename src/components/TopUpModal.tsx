@@ -9,14 +9,14 @@ declare global {
 }
 
 const PRESET_PACKAGES = [
-    { credits: 129, price: 25000 },
-    { credits: 257, price: 50000 },
-    { credits: 513, price: 100000 },
-    { credits: 1026, price: 200000 },
-    { credits: 2565, price: 500000 },
+    { credits: 100, price: 25000 },
+    { credits: 250, price: 50000 },
+    { credits: 500, price: 100000 },
+    { credits: 1100, price: 200000 },
+    { credits: 2600, price: 500000 },
 ];
 
-const PRICE_PER_CREDIT = 195;
+const PRICE_PER_CREDIT = 250;
 
 interface TopUpModalProps {
     isOpen: boolean;

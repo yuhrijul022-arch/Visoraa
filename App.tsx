@@ -8,7 +8,7 @@ import ResultDisplay from './components/ResultDisplay';
 import { ProfileMenu } from './src/components/ProfileMenu';
 import { TopUpModal } from './src/components/TopUpModal';
 import { useToast } from './src/components/ui/ToastProvider';
-import { Loader2, AlertCircle, Settings2, Box, Type, Code, X, Zap, Sparkles } from 'lucide-react';
+import { FileImage, Wand2, X, Info, Download, ArrowRight, Settings2, Box, Sparkles, Zap, Lock, Loader2, AlertCircle, Type, Code } from 'lucide-react';
 
 const INITIAL_INPUTS: DesignInputs = {
   brandName: "",
@@ -441,10 +441,15 @@ export default function App({ user }: AppProps) {
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                         <Sparkles size={10} /> Pro
                       </button>
-                      {dbUser?.infiniteEnabled && (
+                      {dbUser?.infiniteEnabled ? (
                           <button onClick={() => setInputs(prev => ({ ...prev, mode: 'infinite' }))}
                               className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'infinite' ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                               <Sparkles size={10} className="text-orange-400" /> Infinite
+                          </button>
+                      ) : (
+                          <button onClick={() => toast({ type: 'warning', title: 'Fitur Terkunci', description: 'Infinite Mode eksklusif untuk pengguna paket Pro.' })}
+                              className="flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 bg-white/5 border-transparent text-gray-500 hover:bg-white/10 relative overflow-hidden">
+                              <Lock size={10} className="text-gray-500" /> Infinite
                           </button>
                       )}
                     </div>

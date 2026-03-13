@@ -159,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Calculate credit cost
         const combinedUserInput = `${req.body.customPrompt || ''} ${req.body.headline || ''} ${req.body.benefit || ''}`;
-        const baseCostPerImage = calculateCost(combinedUserInput, (dbUser.plan as PlanType) || 'basic');
+        const baseCostPerImage = calculateCost(combinedUserInput, mode || 'standard');
         const totalCreditCost = numImages * baseCostPerImage;
 
         // Rate limit

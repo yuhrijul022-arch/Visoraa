@@ -42,8 +42,18 @@ export const BillingPage: React.FC = () => {
 
     useEffect(() => {
         if (!user?.id) return;
-        supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
-            .then(({ data }) => setTransactions(data || []));
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                fetch('/api/user-payments', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) setTransactions(data);
+                })
+                .catch(err => console.error('Failed to fetch user payments:', err));
+            }
+        });
     }, [user?.id]);
 
     useEffect(() => {
@@ -59,9 +69,13 @@ export const BillingPage: React.FC = () => {
         document.head.appendChild(script);
     }, []);
 
-    const handlePayNow = (snapToken: string) => {
-        if (window.snap) {
-            window.snap.pay(snapToken, {
+    const handlePayNow = (tx: any) => {
+        if (tx.gateway === 'mayar' && tx.redirectUrl) {
+            window.location.href = tx.redirectUrl;
+            return;
+        }
+        if (tx.snapToken && window.snap) {
+            window.snap.pay(tx.snapToken, {
                 onSuccess: () => { window.location.reload(); },
                 onPending: () => { window.location.reload(); },
                 onError: () => { window.location.reload(); },
@@ -196,24 +210,29 @@ export const BillingPage: React.FC = () => {
                             <div key={tx.id} className="bg-[#1c1c1e] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                                 <div>
                                     <div className="text-sm font-medium text-white">
-                                        {tx.type === 'SIGNUP' ? 'Registrasi Visora' : `Top Up ${tx.credits} Credits`}
+                                        {tx.type === 'plan' ? `Langganan Paket ${tx.planType === 'pro' ? 'Pro' : 'Basic'}` : 
+                                         tx.type === 'infinite_extend' ? 'Perpanjang Infinite Mode' : 
+                                         `Top Up ${tx.creditsAmount || 0} Credits`}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5">
-                                        {new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        {new Date(tx.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </div>
+                                    <div className="text-[10px] text-gray-600 mt-0.5 uppercase tracking-wider font-mono">
+                                        {tx.orderId}
                                     </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-2">
                                     <div>
-                                        <div className="text-sm font-semibold text-white">{formatRupiah(tx.amount)}</div>
+                                        <div className="text-sm font-semibold text-white">{formatRupiah(tx.amountIdr)}</div>
                                         <div className="mt-1 text-right">
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor[tx.status] || statusColor.expired}`}>
                                                 {tx.status?.toUpperCase()}
                                             </span>
                                         </div>
                                     </div>
-                                    {tx.status === 'pending' && tx.snap_token && (
+                                    {tx.status === 'pending' && (tx.snapToken || tx.redirectUrl) && (
                                         <button
-                                            onClick={() => handlePayNow(tx.snap_token)}
+                                            onClick={() => handlePayNow(tx)}
                                             className="px-4 py-1.5 bg-white text-black text-xs font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all shadow-lg"
                                         >
                                             Bayar Sekarang
