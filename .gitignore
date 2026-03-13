@@ -1,4 +1,19 @@
-# Logs
+# Environment files — WAJIB
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr
+.vercel/
+
+# Debug & temp files
 logs
 *.log
 npm-debug.log*
@@ -6,10 +21,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+temp_docx_ext/
 
-node_modules
-dist
-dist-ssr
+# OS files
+.DS_Store
+Thumbs.db
+
+# Drizzle (migration files boleh masuk git, tapi bukan credentials)
+# drizzle/ → boleh masuk git
+
 *.local
 
 # Editor directories and files
