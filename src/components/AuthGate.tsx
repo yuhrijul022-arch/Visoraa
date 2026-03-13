@@ -25,9 +25,14 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
                         return;
                     }
                     setUser(toAppUser(session.user));
-                }, () => setUser(toAppUser(session.user)));
+                    setLoading(false);
+                }, () => {
+                    setUser(toAppUser(session.user));
+                    setLoading(false);
+                });
+            } else {
+                setLoading(false);
             }
-            setLoading(false);
         }).catch(() => setLoading(false));
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -43,11 +48,15 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
                         return;
                     }
                     setUser(toAppUser(session.user));
-                }, () => setUser(toAppUser(session.user)));
+                    setLoading(false);
+                }, () => {
+                    setUser(toAppUser(session.user));
+                    setLoading(false);
+                });
             } else {
                 setUser(null);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         return () => {

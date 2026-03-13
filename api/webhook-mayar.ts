@@ -7,6 +7,12 @@ import { MayarProvider } from './_lib/payment/mayar.js';
 import { fulfillPayment } from './_lib/payment/fulfill.js';
 import { createHash } from 'crypto';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') return res.status(200).send('OK');
     if (req.method !== 'POST') return res.status(200).send('OK');
@@ -15,17 +21,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const signature = req.headers['mayar-signature'] as string;
         if (!signature) return res.status(401).send('Missing signature');
 
-        const payload = req.body;
+        // Read raw body for accurate HMAC computation
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) {
+            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+        }
+        const rawBody = Buffer.concat(chunks).toString('utf8');
+        
+        let payload;
+        try {
+            payload = JSON.parse(rawBody);
+        } catch (e) {
+            console.error('Mayar Webhook: Invalid JSON format');
+            return res.status(400).send('Bad Request');
+        }
+        
         console.log('Mayar Webhook received:', payload);
 
         // Fetch Mayar secret
         let secret = process.env.MAYAR_WEBHOOK_SECRET || '';
-        const config = await db.query.paymentGatewayConfig.findFirst({
+        const configRow = await db.query.paymentGatewayConfig.findFirst({
             where: eq(paymentGatewayConfig.gateway, "mayar"),
         });
 
-        if (config?.webhookSecret) {
-            secret = decrypt(config.webhookSecret);
+        if (configRow?.webhookSecret) {
+            secret = decrypt(configRow.webhookSecret);
         }
 
         if (!secret) {
@@ -37,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             serverKey: process.env.MAYAR_SERVER_KEY || "",
             webhookSecret: secret
         });
-        const isValid = await provider.verifyWebhook(JSON.stringify(payload), signature);
+        const isValid = await provider.verifyWebhook(rawBody, signature);
 
         if (!isValid) {
             console.error('Mayar Webhook: invalid signature');
