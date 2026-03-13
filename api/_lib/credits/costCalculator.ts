@@ -1,4 +1,4 @@
-import { PlanType } from '../payment/types';
+import { PlanType } from '../payment/types.js';
 
 /**
  * complexity definition based on Visora PRD:

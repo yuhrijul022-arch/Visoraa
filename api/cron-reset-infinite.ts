@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from './_lib/db';
-import { infiniteUsage } from '../src/db/schema/index';
+import { db } from './_lib/db.js';
+import { infiniteUsage } from '../src/db/schema/index.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') return res.status(204).end();

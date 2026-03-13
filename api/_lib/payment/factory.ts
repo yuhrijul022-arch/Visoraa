@@ -1,6 +1,6 @@
-import { PaymentProvider } from "./types";
-import { MidtransProvider } from "./midtrans";
-import { MayarProvider } from "./mayar";
+import { PaymentProvider } from "./types.js";
+import { MidtransProvider } from "./midtrans.js";
+import { MayarProvider } from "./mayar.js";
 
 export async function getActiveProvider(): Promise<PaymentProvider> {
   const gateway = process.env.ACTIVE_GATEWAY ?? 'midtrans';

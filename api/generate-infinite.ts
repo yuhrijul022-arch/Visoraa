@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import * as fal from '@fal-ai/serverless-client';
-import { checkAndIncrementInfiniteUsage, getInfiniteStatus } from './_lib/infinite/rateLimit';
+import { checkAndIncrementInfiniteUsage, getInfiniteStatus } from './_lib/infinite/rateLimit.js';
 
 fal.config({
     credentials: process.env.FAL_KEY || process.env.VITE_FAL_KEY

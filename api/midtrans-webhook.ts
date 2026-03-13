@@ -2,11 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { db } from './_lib/db';
-import { payments } from '../src/db/schema/index';
-import { getActiveProvider } from './_lib/payment/factory';
-import { MidtransProvider } from './_lib/payment/midtrans';
-import { fulfillPayment } from './_lib/payment/fulfill';
+import { db } from './_lib/db.js';
+import { payments } from '../src/db/schema/index.js';
+import { getActiveProvider } from './_lib/payment/factory.js';
+import { MidtransProvider } from './_lib/payment/midtrans.js';
+import { fulfillPayment } from './_lib/payment/fulfill.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

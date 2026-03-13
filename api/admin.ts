@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq, ilike, or } from 'drizzle-orm';
-import { db } from './_lib/db';
-import { users, payments, paymentGatewayConfig, apiKeys } from '../src/db/schema/index';
-import { encrypt } from './_lib/payment/crypto';
+import { db } from './_lib/db.js';
+import { users, payments, paymentGatewayConfig, apiKeys } from '../src/db/schema/index.js';
+import { encrypt } from './_lib/payment/crypto.js';
 
 // Setup Supabase
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';

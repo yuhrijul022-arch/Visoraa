@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from "./types";
+import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from "./types.js";
 
 export class MayarProvider implements PaymentProvider {
   private serverKey: string;

@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
-import { db } from './_lib/db';
-import { payments, users } from '../src/db/schema/index';
-import { getActiveProvider } from './_lib/payment/factory';
+import { db } from './_lib/db.js';
+import { payments, users } from '../src/db/schema/index.js';
+import { getActiveProvider } from './_lib/payment/factory.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

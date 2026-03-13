@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "../db";
-import { payments, users, creditsTransactions, infiniteUsage } from '../../../src/db/schema/index';
+import { db } from "../db.js";
+import { payments, users, creditsTransactions, infiniteUsage } from '../../../src/db/schema/index.js';
 
 export async function fulfillPayment(orderId: string, gatewayResponse: any) {
   // 1. Get transaction

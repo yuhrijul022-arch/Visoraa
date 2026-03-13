@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from "./types";
+import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from "./types.js";
 
 export class MidtransProvider implements PaymentProvider {
   private isProd: boolean;

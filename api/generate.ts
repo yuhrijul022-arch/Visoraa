@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
-import { db } from './_lib/db';
-import { users } from '../src/db/schema/index';
-import { calculateCost } from './_lib/credits/costCalculator';
-import { PlanType } from './_lib/payment/types';
+import { db } from './_lib/db.js';
+import { users } from '../src/db/schema/index.js';
+import { calculateCost } from './_lib/credits/costCalculator.js';
+import { PlanType } from './_lib/payment/types.js';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;

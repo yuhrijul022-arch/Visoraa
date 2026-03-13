@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
-import { db } from './_lib/db';
-import { payments, paymentGatewayConfig } from '../src/db/schema/index';
-import { decrypt } from './_lib/payment/crypto';
-import { MayarProvider } from './_lib/payment/mayar';
-import { fulfillPayment } from './_lib/payment/fulfill';
+import { db } from './_lib/db.js';
+import { payments, paymentGatewayConfig } from '../src/db/schema/index.js';
+import { decrypt } from './_lib/payment/crypto.js';
+import { MayarProvider } from './_lib/payment/mayar.js';
+import { fulfillPayment } from './_lib/payment/fulfill.js';
 import { createHash } from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
