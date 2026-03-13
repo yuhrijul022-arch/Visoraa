@@ -36,22 +36,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).send('Bad Request');
         }
         
-        console.log('Mayar Webhook received:', payload);
+        console.log('Mayar Webhook payload parsed successfully.');
 
-        // Fetch Mayar secret
+        // Initialize secret from ENV variables first
         let secret = process.env.MAYAR_WEBHOOK_SECRET || '';
-        const configRow = await db.query.paymentGatewayConfig.findFirst({
-            where: eq(paymentGatewayConfig.gateway, "mayar"),
-        });
+        
+        // Attempt to fetch from DB if available, wrap in try/catch to prevent 500s
+        try {
+            const configRow = await db.query.paymentGatewayConfig.findFirst({
+                where: eq(paymentGatewayConfig.gateway, "mayar"),
+            });
 
-        if (configRow?.webhookSecret) {
-            secret = decrypt(configRow.webhookSecret);
+            if (configRow && configRow.webhookSecret) {
+                try {
+                    // It might be encrypted or plain text
+                    secret = decrypt(configRow.webhookSecret);
+                } catch (decryptErr) {
+                    console.error('Mayar Webhook: Failed to decrypt secret from DB. Falling back to ENV.', decryptErr);
+                    // Fallback to storing raw if decryption fails, or just stick to ENV
+                    if (!secret) secret = configRow.webhookSecret;
+                }
+            }
+        } catch (dbErr) {
+            console.error('Mayar Webhook: Failed to fetch config from DB. Falling back to ENV.', dbErr);
         }
 
         if (!secret) {
-            console.error('Mayar Webhook: Secret not configured');
-            return res.status(500).send('Config error');
+            console.error('Mayar Webhook: Secret not configured! Both ENV and DB are empty or failed.');
+            return res.status(500).send('Config error - Missing Webhook Secret');
         }
+
+        console.log('Mayar Webhook: Using secret starting with ->', secret.substring(0, 3) + '...');
 
         const provider = new MayarProvider({
             serverKey: process.env.MAYAR_SERVER_KEY || "",
@@ -60,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isValid = await provider.verifyWebhook(rawBody, signature);
 
         if (!isValid) {
-            console.error('Mayar Webhook: invalid signature');
+            console.error('Mayar Webhook: Invalid signature provided! Payload:', rawBody.substring(0, 50));
             return res.status(401).send('Unauthorized');
         }
 
