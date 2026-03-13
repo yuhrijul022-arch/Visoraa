@@ -17,7 +17,7 @@ export const AdminApiKeys: React.FC = () => {
         if (!session) return;
         
         try {
-            const response = await fetch('/api/admin-apikeys', {
+            const response = await fetch('/api/admin?action=apikeys', {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (response.ok) setKeys(await response.json());
@@ -37,7 +37,7 @@ export const AdminApiKeys: React.FC = () => {
         if (!session) return;
 
         try {
-            const res = await fetch('/api/admin-apikeys', {
+            const res = await fetch('/api/admin?action=apikeys', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const AdminApiKeys: React.FC = () => {
         if (!session) return;
 
         try {
-            const res = await fetch('/api/admin-apikeys', {
+            const res = await fetch('/api/admin?action=apikeys', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

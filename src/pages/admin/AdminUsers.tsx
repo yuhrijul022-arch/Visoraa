@@ -13,7 +13,7 @@ export const AdminUsers: React.FC = () => {
         if (!session) return;
         
         try {
-            const response = await fetch(`/api/admin-users?search=${encodeURIComponent(searchTerm)}`, {
+            const response = await fetch(`/api/admin?action=users&search=${encodeURIComponent(searchTerm)}`, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (response.ok) {
@@ -40,7 +40,7 @@ export const AdminUsers: React.FC = () => {
         if (!session) return;
 
         try {
-            const res = await fetch('/api/admin-users-action', {
+            const res = await fetch('/api/admin?action=users-action', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

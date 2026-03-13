@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import * as fal from '@fal-ai/serverless-client';
-import { checkAndIncrementInfiniteUsage } from './_lib/infinite/rateLimit';
+import { checkAndIncrementInfiniteUsage, getInfiniteStatus } from './_lib/infinite/rateLimit';
 
 fal.config({
     credentials: process.env.FAL_KEY || process.env.VITE_FAL_KEY
@@ -13,11 +13,10 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') return res.status(204).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
         if (!supabase) return res.status(500).json({ error: 'Server configuration error.' });
@@ -29,8 +28,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) return res.status(401).json({ error: 'Invalid auth token' });
 
-        const uid = user.id;
+        if (req.method === 'GET') {
+            return await handleStatus(req, res, user.id);
+        } else if (req.method === 'POST') {
+            return await handleGenerate(req, res, user.id);
+        }
 
+        return res.status(405).json({ error: 'Method not allowed' });
+    } catch (err: any) {
+        console.error('Infinite generic error:', err);
+        return res.status(500).json({ error: 'Internal server error: ' + err.message });
+    }
+}
+
+async function handleStatus(req: VercelRequest, res: VercelResponse, uid: string) {
+    try {
+        const status = await getInfiniteStatus(uid);
+        return res.status(200).json(status);
+    } catch (err: any) {
+        console.error('Infinite status error:', err);
+        return res.status(500).json({ error: 'Internal error' });
+    }
+}
+
+async function handleGenerate(req: VercelRequest, res: VercelResponse, uid: string) {
+    try {
+        if (!supabase) throw new Error('Supabase uninitialized');
+        
         // Verify Pro Plan
         const { data: dbUser } = await supabase.from('users').select('plan, infiniteEnabled').eq('id', uid).single();
         if (!dbUser || dbUser.plan !== 'pro' || !dbUser.infiniteEnabled) {
@@ -60,8 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 image_size: "landscape_4_3",
                 num_inference_steps: 4,
                 num_images: 1,
-                image_url: productImage // Assuming Flux Schnell supports image_url or we need a specific ControlNet/img2img endpoint. 
-                // For simplicity as per PRD "generate images via Flux Schnell", we pass base inputs.
+                image_url: productImage
             },
             logs: true,
         });
@@ -71,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             outputs.push({
                 downloadUrl: result.images[0].url,
                 mimeType: result.images[0].content_type || 'image/jpeg',
-                storagePath: null // not stored in supabase to save space for infinite mode
+                storagePath: null 
             });
         } else {
             return res.status(500).json({ error: 'Failed to generate image from Fal AI.' });
@@ -99,7 +122,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             error: null,
             cost: 0
         });
-
     } catch (err: any) {
         console.error('Generate infinite error:', err);
         return res.status(500).json({ error: 'Internal server error: ' + err.message });

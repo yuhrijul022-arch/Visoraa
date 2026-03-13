@@ -16,7 +16,7 @@ export const AdminOverview: React.FC = () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
             try {
-                const response = await fetch('/api/admin-stats', {
+                const response = await fetch('/api/admin?action=stats', {
                     headers: { 'Authorization': `Bearer ${session.access_token}` }
                 });
                 if (response.ok) {

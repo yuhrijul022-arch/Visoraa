@@ -12,7 +12,7 @@ export const AdminPaymentGateway: React.FC = () => {
         if (!session) return;
         
         try {
-            const response = await fetch('/api/admin-gateways', {
+            const response = await fetch('/api/admin?action=gateways', {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (response.ok) setGateways(await response.json());
@@ -31,7 +31,7 @@ export const AdminPaymentGateway: React.FC = () => {
         if (!session) return;
 
         try {
-            const res = await fetch('/api/admin-gateways', {
+            const res = await fetch('/api/admin?action=gateways', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export const AdminPaymentGateway: React.FC = () => {
         if (!session) return;
 
         try {
-            const res = await fetch('/api/admin-gateways', {
+            const res = await fetch('/api/admin?action=gateways', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

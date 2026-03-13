@@ -25,7 +25,7 @@ export const BillingPage: React.FC = () => {
 
             // Fetch Infinite Status
             try {
-                const res = await fetch('/api/generate-infinite-status', {
+                const res = await fetch('/api/generate-infinite', {
                     headers: { 'Authorization': `Bearer ${session.access_token}` }
                 });
                 if (res.ok) {
