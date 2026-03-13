@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from "./types.js";
 
 // Mayar Headless API v1
+// Docs: https://docs.mayar.id
 // Production: https://api.mayar.id/hl/v1
 // Sandbox:    https://api.mayar.club/hl/v1
 const MAYAR_BASE_URL = process.env.MAYAR_BASE_URL || "https://api.mayar.id/hl/v1";
@@ -16,7 +17,9 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {
-    const url = `${MAYAR_BASE_URL}/payment/create`;
+    // Mayar Headless API: POST /hl/v1/payment
+    // (NOT /payment/create — that endpoint doesn't exist)
+    const url = `${MAYAR_BASE_URL}/payment`;
     const nameStr = params.name || "Visora User";
     const siteUrl = process.env.VITE_SITE_URL || "https://visoraa.vercel.app";
 
@@ -27,13 +30,13 @@ export class MayarProvider implements PaymentProvider {
       name: nameStr,
       email: params.email,
       amount: params.amountIdr,
-      mobile: "0000000000", // Required by Mayar API, fallback if not provided
+      mobile: "0000000000",
       description: `Visora ${params.paymentType} - Order ${params.orderId}`,
       redirectURL: `${siteUrl}/dashboard?payment=success&orderId=${params.orderId}`,
       expiredAt: expiredAt,
     };
 
-    console.log("[Mayar] Creating payment:", { url, orderId: params.orderId, amount: params.amountIdr });
+    console.log("[Mayar] Creating payment:", JSON.stringify({ url, body }, null, 2));
 
     const response = await fetch(url, {
       method: "POST",
@@ -45,10 +48,12 @@ export class MayarProvider implements PaymentProvider {
     });
 
     const responseText = await response.text();
+    console.log("[Mayar] Response status:", response.status);
+    console.log("[Mayar] Response body:", responseText.substring(0, 1000));
 
     if (!response.ok) {
       console.error("[Mayar] API error:", response.status, responseText);
-      throw new Error(`Mayar API error (${response.status}): ${responseText}`);
+      throw new Error(`Mayar API error (${response.status}): ${responseText.substring(0, 500)}`);
     }
 
     let data: any;
@@ -59,18 +64,20 @@ export class MayarProvider implements PaymentProvider {
       throw new Error(`Mayar returned invalid JSON: ${responseText.substring(0, 200)}`);
     }
 
-    console.log("[Mayar] Payment created:", JSON.stringify(data).substring(0, 500));
+    console.log("[Mayar] Parsed response:", JSON.stringify(data, null, 2).substring(0, 1000));
 
     // Mayar Headless API v1 response structure:
     // { statusCode: 200, messages: "...", data: { id, link, ... } }
     const paymentData = data.data || data;
-    const paymentLink = paymentData.link || paymentData.url || paymentData.paymentLink || "";
+    const paymentLink = paymentData.link || paymentData.url || paymentData.paymentLink || paymentData.shortLink || "";
     const paymentId = paymentData.id || "";
 
     if (!paymentLink) {
       console.error("[Mayar] No payment link in response:", JSON.stringify(data));
-      throw new Error("Mayar did not return a payment link");
+      throw new Error("Mayar did not return a payment link. Full response: " + JSON.stringify(data).substring(0, 500));
     }
+
+    console.log("[Mayar] Payment link:", paymentLink);
 
     return {
       token: paymentId,
@@ -80,7 +87,6 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async verifyWebhook(payload: any, signature: string): Promise<boolean> {
-    // Mayar webhook signature: HMAC SHA256 of the JSON body using webhook secret
     const payloadString = typeof payload === "string" ? payload : JSON.stringify(payload);
     const expectedSignature = crypto
       .createHmac("sha256", this.webhookSecret)
@@ -90,3 +96,4 @@ export class MayarProvider implements PaymentProvider {
     return signature === expectedSignature;
   }
 }
+
