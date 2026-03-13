@@ -82,12 +82,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Handle specific event
         // Mayar typically posts events like payment.completed or invoice.paid inside data
         // For standard checkout links it might be just payment.successful
-        if (payload.status === "SUCCESSFUL" || payload.status === "COMPLETED" || payload.event === "payment.success" || payload.name === "payment.created") {
+        if (payload.status === "SUCCESSFUL" || payload.status === "COMPLETED" || payload.event === "payment.success" || payload.name === "payment.created" || payload.event === "payment.received") {
             const data = payload.data || payload; // Depending on actual payload struct
-            const orderId = data.reference || data.orderId || data.order_id || payload.reference;
+            let orderId = data.reference || data.orderId || data.order_id || payload.reference;
+
+            // If Mayar doesn't send an orderId/reference field natively, we must extract it from the productDescription we sent them.
+            if (!orderId && data.productDescription) {
+                // e.g. "Visora topup - Order VIS-TOPUP-1773419382120-43146"
+                const match = data.productDescription.match(/Order (VIS-[A-Z0-9-]+)/);
+                if (match && match[1]) {
+                    orderId = match[1];
+                }
+            }
+
+            console.log('Mayar Webhook processing payment for Order ID:', orderId);
 
             if (!orderId) {
-                console.error("Mayar webhook: no order ID found in payload");
+                console.error("Mayar webhook: no order ID found in payload! Examined fields:", JSON.stringify({ reference: data.reference, desc: data.productDescription }));
                 return res.status(200).send("Ignored");
             }
 
@@ -96,6 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             if (!paymentRecord) {
+                console.error('Mayar Webhook: Transaction not found in DB for order:', orderId);
                 return res.status(200).send('Ignored: Transaction not found');
             }
 
