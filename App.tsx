@@ -264,23 +264,6 @@ export default function App({ user }: AppProps) {
 
         {/* Central Display */}
         <div className="flex flex-col items-center justify-center p-4 min-h-[60vh]">
-          {dbUser?.plan === 'basic' && (
-            <div className="mb-6 w-full max-w-2xl bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between" style={{ animation: 'fadeInDown 0.4s ease-out' }}>
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                        <Sparkles size={20} className="text-purple-400" />
-                    </div>
-                    <div>
-                        <h4 className="text-white font-semibold text-sm">Upgrade ke Pro</h4>
-                        <p className="text-gray-400 text-xs">Unlock Infinite Mode & fitur 4K Resolution.</p>
-                    </div>
-                </div>
-                <button onClick={() => setShowUpgradeModal(true)} className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:bg-purple-100 transition-colors">
-                    Lihat Penawaran
-                </button>
-            </div>
-          )}
-
           {error && (
             <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-sm" style={{ animation: 'fadeInDown 0.3s ease-out' }}>
               <AlertCircle size={16} /> {error}
@@ -454,20 +437,19 @@ export default function App({ user }: AppProps) {
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                         <Zap size={10} /> Standard
                       </button>
-                      <button onClick={() => {
-                          if (dbUser?.plan !== 'pro') {
-                              setShowSettings(false);
-                              setShowUpgradeModal(true);
-                              return;
-                          }
-                          setInputs(prev => ({ ...prev, mode: 'pro' }));
-                      }}
+                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                        <Sparkles size={10} /> Pro {dbUser?.plan !== 'pro' && '🔒'}
+                        <Sparkles size={10} /> Pro
                       </button>
+                      {dbUser?.infiniteEnabled && (
+                          <button onClick={() => setInputs(prev => ({ ...prev, mode: 'infinite' }))}
+                              className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'infinite' ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
+                              <Sparkles size={10} className="text-orange-400" /> Infinite
+                          </button>
+                      )}
                     </div>
                     <div className="text-[9px] text-gray-600 mt-1">
-                      {inputs.mode === 'pro' ? '2 credits per image • Higher quality' : '1 credit per image • Fast generation'}
+                      {inputs.mode === 'infinite' ? 'Free generation for PRO users' : (inputs.mode === 'pro' ? '2 credits per image • Higher quality' : '1 credit per image • Fast generation')}
                     </div>
                   </div>
                 </div>

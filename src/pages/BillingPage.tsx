@@ -4,6 +4,7 @@ import { useCredits } from '../lib/credits';
 import { formatRupiah } from '../utils/currency';
 import { TopUpModal } from '../components/TopUpModal';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 
 export const BillingPage: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -153,6 +154,24 @@ export const BillingPage: React.FC = () => {
                                 {isExtending ? 'Memproses...' : 'Perpanjang Infinite Limit'}
                             </button>
                         </div>
+                    </div>
+                )}
+
+                {/* Upgrade ke Pro Banner */}
+                {dbUser?.plan === 'basic' && (
+                    <div className="mb-6 w-full bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                <Sparkles size={20} className="text-purple-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-semibold text-sm">Upgrade ke Pro</h4>
+                                <p className="text-gray-400 text-xs">Unlock Infinite Mode & fitur 4K Resolution.</p>
+                            </div>
+                        </div>
+                        <button onClick={() => navigate('/formorderauth?plan=pro')} className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:bg-purple-100 transition-colors whitespace-nowrap">
+                            Lihat Penawaran
+                        </button>
                     </div>
                 )}
 
