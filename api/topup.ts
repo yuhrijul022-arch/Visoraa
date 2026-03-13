@@ -66,7 +66,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             type: 'topup',
             creditsAmount: finalCreditsQty,
             amountIdr: totalPrice,
-            status: 'pending'
+            status: 'pending',
+            gatewayResponse: {
+                snapToken: result.token,
+                redirectUrl: result.redirectUrl
+            }
         });
 
         // Ensure user row exists in new Drizzle table (if they haven't been inserted for some reason)
