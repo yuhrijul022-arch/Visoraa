@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from './ui/ToastProvider.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { formatRupiah } from '../utils/currency.js';
@@ -16,6 +17,7 @@ declare global {
 
 export const UnifiedCheckoutComponent: React.FC = () => {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -55,6 +57,14 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         trackPageView();
         trackInitiateCheckout();
     }, []);
+
+    // ── Auto-resume Pending Payment ──
+    useEffect(() => {
+        const pendingOrderId = localStorage.getItem('visora_pending_order_id');
+        if (pendingOrderId && !window.location.search.includes('orderId')) {
+            navigate('/pending');
+        }
+    }, [navigate]);
 
     // ── Load Midtrans Snap ──
     useEffect(() => {

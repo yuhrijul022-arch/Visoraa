@@ -45,6 +45,9 @@ export const PaymentPending: React.FC = () => {
             
             const data = await resp.json();
             
+            if (data.redirectUrl) setPendingUrl(data.redirectUrl);
+            if (data.snapToken) setPendingSnapToken(data.snapToken);
+            
             if (data.status === 'success' || data.status === 'paid' || data.status === 'settlement') {
                 setIsSuccess(true);
                 toast({ type: 'success', title: 'Pembayaran Diterima! 🎉', description: 'Memproses login otomatis...' });
@@ -121,7 +124,14 @@ export const PaymentPending: React.FC = () => {
             
             {/* Top Back Button */}
             <button 
-                onClick={() => navigate('/formorder')} 
+                onClick={() => {
+                    localStorage.removeItem('visora_pending_order_id');
+                    localStorage.removeItem('visora_pending_url');
+                    localStorage.removeItem('visora_pending_email');
+                    localStorage.removeItem('visora_pending_pass');
+                    localStorage.removeItem('visora_pending_snap_token');
+                    navigate('/formorder');
+                }} 
                 className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-black transition-colors font-medium bg-white px-4 py-2 rounded-full shadow-sm"
             >
                 <ArrowLeft size={18} /> Kembali

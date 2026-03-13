@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ui/ToastProvider.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { formatRupiah } from '../utils/currency.js';
@@ -6,6 +7,7 @@ import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout,
 
 export const FormOrderAuth: React.FC = () => {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [promoCode, setPromoCode] = useState('');
@@ -24,6 +26,14 @@ export const FormOrderAuth: React.FC = () => {
         trackPageView();
         trackInitiateCheckout();
     }, []);
+
+    // ── Auto-resume Pending Payment ──
+    useEffect(() => {
+        const pendingOrderId = localStorage.getItem('visora_pending_order_id');
+        if (pendingOrderId && !window.location.search.includes('orderId')) {
+            navigate('/pending');
+        }
+    }, [navigate]);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {

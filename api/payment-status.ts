@@ -20,10 +20,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
+        const gatewayResp = paymentRecord.gatewayResponse as Record<string, any> | null;
+
         return res.status(200).json({
             status: paymentRecord.status,
             type: paymentRecord.type,
-            amount: paymentRecord.amountIdr
+            amount: paymentRecord.amountIdr,
+            redirectUrl: gatewayResp?.redirectUrl || null,
+            snapToken: gatewayResp?.snapToken || null
         });
     } catch (err) {
         console.error('Error fetching payment status:', err);

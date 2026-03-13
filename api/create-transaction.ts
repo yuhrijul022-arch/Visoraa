@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             amountIdr: totalPrice,
             paymentType: paymentType,
             planType: paymentType === 'plan' ? planType : undefined,
-            redirectPath: (!authHeader && paymentType === 'plan') ? '/pending' : '/dashboard'
+            redirectPath: '/pending'
         });
 
         // Ensure user row in Drizzle (ignored if exists)
@@ -133,7 +133,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             type: paymentType as any,
             planType: paymentType === 'plan' ? planType : null,
             amountIdr: totalPrice,
-            status: 'pending'
+            status: 'pending',
+            gatewayResponse: { redirectUrl: result.redirectUrl, snapToken: result.token }
         });
 
         return res.status(200).json({
