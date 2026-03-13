@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
-import { db } from '../src/lib/db';
+import { db } from './_lib/db';
 import { users } from '../src/db/schema/users';
 import { calculateCost } from './_lib/credits/costCalculator';
 import { PlanType } from './_lib/payment/types';

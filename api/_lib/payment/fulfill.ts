@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "../../../src/lib/db";
+import { db } from "../db";
 import { payments } from "../../../src/db/schema/payments";
 import { users } from "../../../src/db/schema/users";
 import { creditsTransactions } from "../../../src/db/schema/credits";

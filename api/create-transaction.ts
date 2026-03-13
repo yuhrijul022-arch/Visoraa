@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { db } from '../src/lib/db';
+import { db } from './_lib/db';
 import { payments } from '../src/db/schema/payments';
 import { users } from '../src/db/schema/users';
 import { getActiveProvider } from './_lib/payment/factory';

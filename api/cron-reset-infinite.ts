@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../src/lib/db';
+import { db } from './_lib/db';
 import { infiniteUsage } from '../src/db/schema/infiniteUsage';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../src/lib/db';
+import { db } from "../db";
 import { infiniteUsage } from '../../../src/db/schema/infiniteUsage';
 
 export const DAILY_LIMIT = 30;
