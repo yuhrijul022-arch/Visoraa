@@ -61,8 +61,8 @@ async function handleStats(req: VercelRequest, res: VercelResponse) {
     const successfulPayments = await db.query.payments.findMany({
         where: eq(payments.status, 'paid')
     });
-    const totalRevenue = successfulPayments.reduce((acc, p) => acc + (p.amountIdr || 0), 0);
-    const totalCredits = usersList.reduce((acc, u) => acc + (u.credits || 0), 0);
+    const totalRevenue = successfulPayments.reduce((acc: number, p: any) => acc + (p.amountIdr || 0), 0);
+    const totalCredits = usersList.reduce((acc: number, u: any) => acc + (u.credits || 0), 0);
     const activeGenerates = 0;
 
     return res.status(200).json({ totalUsers, totalRevenue, totalCredits, activeGenerates });

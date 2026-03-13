@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { eq } from 'drizzle-orm';
 import { db } from './_lib/db';
 import { payments } from '../src/db/schema/payments';
 import { users } from '../src/db/schema/users';
@@ -35,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 userId = user.id;
                 
                 // Security Check: Prevent downgrade
-                const dbUser = await db.query.users.findFirst({ where: (users, { eq }) => eq(users.id, userId!) });
+                const dbUser = await db.query.users.findFirst({ where: eq(users.id, userId!) });
                 if (dbUser?.plan === 'pro' && planType === 'basic') {
                     return res.status(400).json({ error: "Downgrade tidak diperbolehkan" });
                 }
