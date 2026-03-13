@@ -121,7 +121,7 @@ export default function App({ user }: AppProps) {
 
   const isLocked = step === 'analyzing' || step === 'generating';
 
-  const creditCost = inputs.mode === 'infinite' ? 0 : (inputs.mode === 'pro' ? 2 : 1);
+  const creditCost = inputs.mode === 'infinite' ? 0 : (inputs.mode === 'pro' ? 55 : 30);
   const totalCost = (inputs.quantity || 1) * creditCost;
 
   const handleAnalyze = async () => {
@@ -258,7 +258,7 @@ export default function App({ user }: AppProps) {
                 Reset
               </button>
             )}
-            <ProfileMenu user={user} credits={creditState.credits} onTopUp={() => setShowTopUp(true)} />
+            <ProfileMenu user={user} credits={creditState.credits} onTopUp={() => setShowTopUp(true)} plan={dbUser?.plan} />
           </div>
         </div>
 
@@ -441,7 +441,7 @@ export default function App({ user }: AppProps) {
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                         <Sparkles size={10} /> Pro
                       </button>
-                      {dbUser?.infiniteEnabled ? (
+                      {dbUser?.plan === 'pro' || dbUser?.infiniteEnabled ? (
                           <button onClick={() => setInputs(prev => ({ ...prev, mode: 'infinite' }))}
                               className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'infinite' ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
                               <Sparkles size={10} className="text-orange-400" /> Infinite
@@ -453,8 +453,9 @@ export default function App({ user }: AppProps) {
                           </button>
                       )}
                     </div>
-                    <div className="text-[9px] text-gray-600 mt-1">
-                      {inputs.mode === 'infinite' ? 'Free generation for PRO users' : (inputs.mode === 'pro' ? '2 credits per image • Higher quality' : '1 credit per image • Fast generation')}
+                    <div className="text-[9px] text-gray-500 mt-2 text-center font-medium">
+                      {inputs.mode === 'infinite' ? '0 Credits (Unlimited untuk PRO) • Kecepatan Tinggi' : 
+                      (inputs.mode === 'pro' ? '55-65 Credits per Gambar • Kualitas Fotorealistik' : '30-37 Credits per Gambar • Kualitas Menengah')}
                     </div>
                   </div>
                 </div>

@@ -7,9 +7,10 @@ interface ProfileMenuProps {
     user: AppUser;
     credits: number;
     onTopUp: () => void;
+    plan?: string;
 }
 
-export const ProfileMenu: React.FC<ProfileMenuProps> = ({ user, credits, onTopUp }) => {
+export const ProfileMenu: React.FC<ProfileMenuProps> = ({ user, credits, onTopUp, plan }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -49,9 +50,16 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({ user, credits, onTopUp
             {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-[#1c1c1e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}>
-                    <div className="p-4 border-b border-white/5">
-                        <div className="text-sm font-semibold text-white truncate">{user.displayName || 'User'}</div>
-                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                    <div className="p-4 border-b border-white/5 relative">
+                        {plan && (
+                            <div className="absolute top-3 right-4">
+                                <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full font-bold ${plan === 'pro' ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'bg-white/5 text-gray-400 border border-white/10'}`}>
+                                    {plan}
+                                </span>
+                            </div>
+                        )}
+                        <div className="text-sm font-semibold text-white truncate max-w-[130px]">{user.displayName || 'User'}</div>
+                        <div className="text-xs text-gray-500 truncate mt-0.5 max-w-[130px]">{user.email}</div>
                     </div>
 
                     <div className="p-2">
