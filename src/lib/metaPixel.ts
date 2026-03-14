@@ -2,7 +2,7 @@
  * Meta Pixel utility with robust event_id generation for CAPI deduplication.
  */
 
-const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '';
+const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '988932959615649';
 // Global test code for CAPI sending to Meta Event Manager
 export const FB_TEST_EVENT_CODE = 'TEST31173';
 

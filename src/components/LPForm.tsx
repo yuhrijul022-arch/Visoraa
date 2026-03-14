@@ -29,21 +29,18 @@ const USE_CASES = [
 ];
 
 const BENEFITS_BASIC = [
-    'Welcome Credits: 250 credits',
-    'Generate desain statis & dinamis',
-    'Akses ke seluruh template dasar',
-    'Resolusi standar (1080p)',
-    'Akses selamanya (lifetime)',
+    'Generate desain konten promosi dan foto produk',
+    'Akses semua template dasar yang udah dikurasi',
+    'Resolusi 1080p siap upload ke semua platform',
+    'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
 const BENEFITS_PRO = [
-    { text: 'Akses Fitur Infinite Mode', bold: true },
-    'Welcome Credits: 400 credits',
-    'Generate gambar tanpa limit dengan Infinite Mode',
-    'Resolusi tinggi (4K & Ultra HD)',
-    'Prioritas antrean server (Jalur Cepat)',
-    'Akses eksklusif template Pro',
-    'Akses selamanya (lifetime)',
+    { text: 'Infinite Mode — generate desain tanpa batas sama sekali', bold: true },
+    'Resolusi 4K dan Ultra HD buat hasil paling tajam',
+    'Jalur server prioritas, ga perlu antri lama',
+    'Akses style desain eksklusif yang ga ada di Basic',
+    'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
 const FAQS = [
@@ -233,7 +230,7 @@ export const LPForm: React.FC = () => {
                         {/* Basic Plan */}
                         <div className="lp-pricing-card">
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Basic</h3>
-                            <p style={{ color: 'var(--lp-text-secondary)', marginBottom: '24px' }}>Untuk pemula yang ingin visual cepat.</p>
+                            <p style={{ color: 'var(--lp-text-secondary)', marginBottom: '24px' }}>Cocok buat kamu yang baru mau mulai bikin konten sendiri</p>
                             <div style={{ marginBottom: 24 }}>
                                 <span className="lp-original-price">Rp 150.000</span>
                                 <div className="lp-promo-price">Rp 99.000</div>
@@ -253,7 +250,7 @@ export const LPForm: React.FC = () => {
                         <div className="lp-pricing-card lp-pricing-pro">
                             <div className="lp-promo-badge" style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)' }}>Paling Laris</div>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#fff' }}>Pro</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Akses tanpa batas untuk bisnis & agency.</p>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Buat kamu yang posting tiap hari dan butuh hasil tanpa limit</p>
                             <div style={{ marginBottom: 24 }}>
                                 <span className="lp-original-price" style={{ color: 'rgba(255,255,255,0.5)' }}>Rp 250.000</span>
                                 <div className="lp-promo-price" style={{ color: '#fff' }}>Rp 145.000</div>

@@ -225,7 +225,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-container">
                     <div className="lp-section-header">
                         <h2>Bayar Sekali, Akses Selamanya</h2>
-                        <p>Ga ada biaya langganan, ga ada kejutan tagihan</p>
+                        <p>Ga ada biaya langganan, jadi lebih hemat</p>
                         <div className="lp-counter-bar" style={{ maxWidth: 400, margin: '20px auto 14px' }}>
                             <div className="lp-counter-fill" style={{ width: `${progress}%` }} />
                         </div>
