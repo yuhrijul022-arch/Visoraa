@@ -6,10 +6,8 @@ export async function getActiveProvider(): Promise<PaymentProvider> {
   const gateway = process.env.ACTIVE_GATEWAY ?? 'midtrans';
   
   if (gateway === 'mayar') {
-    return new MayarProvider({
-      serverKey: process.env.MAYAR_SERVER_KEY!,
-      webhookSecret: process.env.MAYAR_WEBHOOK_SECRET!,
-    });
+    // MayarProvider now reads MAYAR_API_KEY and MAYAR_WEBHOOK_SECRET locally if not provided
+    return new MayarProvider({});
   }
   
   return new MidtransProvider({

@@ -5,24 +5,29 @@ import { PaymentProvider, CreateTransactionParams, PaymentProviderResult } from 
 // Docs: https://docs.mayar.id
 // Production: https://api.mayar.id/hl/v1
 // Sandbox:    https://api.mayar.club/hl/v1
-const MAYAR_BASE_URL = process.env.MAYAR_BASE_URL || "https://api.mayar.id/hl/v1";
 
 export class MayarProvider implements PaymentProvider {
   private serverKey: string;
   private webhookSecret: string;
+  private baseUrl: string;
 
-  constructor({ serverKey, webhookSecret }: { serverKey: string; webhookSecret: string }) {
-    this.serverKey = serverKey;
-    this.webhookSecret = webhookSecret;
+  constructor({ serverKey, webhookSecret }: { serverKey?: string; webhookSecret?: string }) {
+    // Determine the active key and API URL from Vercel env
+    this.serverKey = process.env.MAYAR_API_KEY || serverKey || "";
+    this.webhookSecret = process.env.MAYAR_WEBHOOK_SECRET || webhookSecret || "";
+    this.baseUrl = process.env.MAYAR_API_URL || "https://api.mayar.id/hl/v1";
+
+    if (!this.serverKey) {
+      throw new Error("Missing MAYAR_API_KEY in environment variables. Harap pastikan variabel Vercel process.env.MAYAR_API_KEY sudah diisi.");
+    }
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {
-    // Mayar Headless API: POST /hl/v1/payment/create
-    const url = `${MAYAR_BASE_URL}/payment/create`;
+    const url = `${this.baseUrl}/payment/create`;
     const nameStr = params.name || "Visora User";
     const siteUrl = process.env.VITE_SITE_URL || "https://visoraa.vercel.app";
 
-    // Set expiration 24 hours from now in ISO 8601 format
+    // Set expiration 24 hours from now
     const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     const body = {
@@ -30,7 +35,7 @@ export class MayarProvider implements PaymentProvider {
       email: params.email,
       amount: params.amountIdr,
       mobile: "0000000000",
-      description: `Visora ${params.paymentType} - Order ${params.orderId}`,
+      description: params.description || `Visora ${params.paymentType} - Order ${params.orderId}`,
       redirectURL: `${siteUrl}/payment/waiting?orderId=${params.orderId}`,
       expiredAt: expiredAt,
     };
@@ -41,7 +46,9 @@ export class MayarProvider implements PaymentProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this.serverKey}`,
+        // process.env.MAYAR_API_KEY usually contains 'Bearer <token>' or similar based on user requirements.
+        // User requested: Gunakan variabel process.env.MAYAR_API_KEY untuk API Key (dengan format Bearer <token>).
+        Authorization: this.serverKey.startsWith("Bearer ") ? this.serverKey : `Bearer ${this.serverKey}`,
       },
       body: JSON.stringify(body),
     });

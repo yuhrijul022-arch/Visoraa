@@ -67,7 +67,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
     useEffect(() => {
         const pendingOrderId = localStorage.getItem('visora_pending_order_id');
         if (pendingOrderId && !window.location.search.includes('orderId')) {
-            navigate('/pending');
+            navigate('/pending-payment');
         }
     }, [navigate]);
 
@@ -182,16 +182,12 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             if (window.snap) {
                 window.snap.pay(snapToken, {
                     onSuccess: async () => {
-                        toast({ type: 'success', title: 'Pembayaran Berhasil! 🎉', description: 'Akun kamu sedang disiapkan...' });
-                        const { error } = await supabase.auth.signInWithPassword({ email, password });
-                        localStorage.removeItem('visora_pending_email');
-                        localStorage.removeItem('visora_pending_pass');
-                        if (!error) window.location.href = '/dashboard';
-                        else window.location.href = '/success';
+                        toast({ type: 'success', title: 'Pembayaran Berhasil! 🎉', description: 'Memverifikasi pembayaran...' });
+                        window.location.href = '/pending-payment';
                     },
                     onPending: () => {
                         toast({ type: 'info', title: 'Pembayaran Pending', description: 'Selesaikan pembayaran sebelum batas waktu.' });
-                        window.location.href = '/pending';
+                        window.location.href = '/pending-payment';
                     },
                     onError: () => {
                         localStorage.removeItem('visora_pending_email');
@@ -199,7 +195,10 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                         toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' });
                         setIsLoading(false);
                     },
-                    onClose: () => { setIsLoading(false); },
+                    onClose: () => { 
+                        setIsLoading(false); 
+                        window.location.href = '/pending-payment';
+                    },
                 });
             }
         } catch {

@@ -19,8 +19,21 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 Promise.resolve(ensureUserRow(session.user)).catch(console.error);
-                supabase.from('users').select('plan').eq('id', session.user.id).single().then(({ data }) => {
+                supabase.from('users').select('plan').eq('id', session.user.id).single().then(async ({ data }) => {
                     if (data && (!data.plan || data.plan === 'none')) {
+                        try {
+                            const res = await fetch('/api/payment/latest-pending', {
+                                headers: { Authorization: `Bearer ${session.access_token}` }
+                            });
+                            if (res.ok) {
+                                const pendingData = await res.json();
+                                if (pendingData.hasPending) {
+                                    window.location.href = `/pending-payment?orderId=${pendingData.orderId}`;
+                                    return;
+                                }
+                            }
+                        } catch (e) { console.error('Error checking pending payment:', e); }
+
                         window.location.href = '/formorderauth';
                         return;
                     }
@@ -42,8 +55,21 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
             }
             if (session?.user) {
                 Promise.resolve(ensureUserRow(session.user)).catch(console.error);
-                supabase.from('users').select('plan').eq('id', session.user.id).single().then(({ data }) => {
+                supabase.from('users').select('plan').eq('id', session.user.id).single().then(async ({ data }) => {
                     if (data && (!data.plan || data.plan === 'none')) {
+                        try {
+                            const res = await fetch('/api/payment/latest-pending', {
+                                headers: { Authorization: `Bearer ${session.access_token}` }
+                            });
+                            if (res.ok) {
+                                const pendingData = await res.json();
+                                if (pendingData.hasPending) {
+                                    window.location.href = `/pending-payment?orderId=${pendingData.orderId}`;
+                                    return;
+                                }
+                            }
+                        } catch (e) { console.error('Error checking pending payment:', e); }
+
                         window.location.href = '/formorderauth';
                         return;
                     }
@@ -74,7 +100,7 @@ export const AuthGate: React.FC<{ children: (user: AppUser) => React.ReactNode }
     }
 
     if (!user) {
-        return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/dashboard' } }); }} loading={false} />;
+        return <LoginPage onSignIn={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/resolve' } }); }} loading={false} />;
     }
 
     // Authenticated → langsung masuk ke app (credits jadi access control)

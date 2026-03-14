@@ -10,6 +10,7 @@ export const FormOrderAuth: React.FC = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
+    const [whatsapp, setWhatsapp] = useState('');
     const [promoCode, setPromoCode] = useState('');
     const [showPromo, setShowPromo] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -31,21 +32,55 @@ export const FormOrderAuth: React.FC = () => {
     useEffect(() => {
         const pendingOrderId = localStorage.getItem('visora_pending_order_id');
         if (pendingOrderId && !window.location.search.includes('orderId')) {
-            navigate('/pending');
+            navigate('/pending-payment');
         }
     }, [navigate]);
 
+    // ── Guard: redirect if user already has plan or pending payment ──
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                setSessionToken(session.access_token);
-                setEmail(session.user.email || '');
-                setName(session.user.user_metadata?.full_name || session.user.user_metadata?.name || '');
-            } else {
-                // If not logged in, they shouldn't be here, redirect them to login/home
+        const guard = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) {
+                // Not logged in → send to landing
                 window.location.href = '/lpform';
+                return;
             }
-        });
+
+            setSessionToken(session.access_token);
+            setEmail(session.user.email || '');
+            setName(session.user.user_metadata?.full_name || session.user.user_metadata?.name || '');
+
+            // Check if user already has an active plan
+            const { data: userData } = await supabase
+                .from('users')
+                .select('plan')
+                .eq('id', session.user.id)
+                .single();
+
+            if (userData?.plan && userData.plan !== 'none') {
+                // Active plan → dashboard
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            // Check for pending payment
+            try {
+                const res = await fetch('/api/payment/latest-pending', {
+                    headers: { Authorization: `Bearer ${session.access_token}` }
+                });
+                if (res.ok) {
+                    const pendingData = await res.json();
+                    if (pendingData.hasPending) {
+                        window.location.href = `/pending-payment?orderId=${pendingData.orderId}`;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking pending payment:', e);
+            }
+            // No plan, no pending → user may proceed with form
+        };
+        guard();
     }, []);
 
     // ── Load Midtrans Snap ──
@@ -88,6 +123,11 @@ export const FormOrderAuth: React.FC = () => {
             return;
         }
 
+        if (!whatsapp.trim()) {
+            toast({ type: 'warning', title: 'Data Belum Lengkap', description: 'Silakan isi nomor WhatsApp Anda.' });
+            return;
+        }
+
         setIsLoading(true);
         try {
             const resp = await fetch('/api/create-transaction', {
@@ -96,7 +136,7 @@ export const FormOrderAuth: React.FC = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${sessionToken}`
                 },
-                body: JSON.stringify({ email, username: name, promoCode: promoCode || undefined, planType: plan }),
+                body: JSON.stringify({ email, username: name, whatsapp, promoCode: promoCode || undefined, planType: plan }),
             });
             const result = await resp.json();
             
@@ -132,18 +172,21 @@ export const FormOrderAuth: React.FC = () => {
                 
                 window.snap.pay(snapToken, {
                     onSuccess: () => {
-                        toast({ type: 'success', title: 'Pembayaran Berhasil! 🎉', description: 'Akun kamu siap digunakan.' });
-                        window.location.href = '/dashboard';
+                        toast({ type: 'success', title: 'Pembayaran Berhasil! 🎉', description: 'Memverifikasi pembayaran...' });
+                        window.location.href = '/pending-payment';
                     },
                     onPending: () => {
                         toast({ type: 'info', title: 'Pembayaran Pending', description: 'Selesaikan pembayaran sebelum batas waktu.' });
-                        window.location.href = '/pending';
+                        window.location.href = '/pending-payment';
                     },
                     onError: () => {
                         toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' });
                         setIsLoading(false);
                     },
-                    onClose: () => { setIsLoading(false); },
+                    onClose: () => { 
+                        setIsLoading(false); 
+                        window.location.href = '/pending-payment';
+                    },
                 });
             } else {
                 toast({ type: 'error', title: 'Error', description: 'Gagal memuat sistem pembayaran.' });
@@ -161,6 +204,20 @@ export const FormOrderAuth: React.FC = () => {
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 8 }}>Selesaikan Pendaftaran</h2>
                     <p style={{ color: '#86868b', fontSize: '0.95rem' }}>Pilih paket untuk mengaktifkan akun <strong>{email}</strong>.</p>
+                </div>
+
+                {/* Personal Details Collection */}
+                <div style={{ marginBottom: 24, textAlign: 'left' }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, color: '#1d1d1f' }}>Nomor WhatsApp *</label>
+                        <input 
+                            type="tel"
+                            value={whatsapp} 
+                            onChange={e => setWhatsapp(e.target.value.replace(/[^0-9+\-() ]/g, ''))} 
+                            placeholder="Contoh: 081234567890" 
+                            style={{ width: '100%', background: '#F5F5F7', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(0,0,0,0.06)', outline: 'none', fontSize: '0.95rem' }} 
+                        />
+                    </div>
                 </div>
 
                 {/* Plan Selection Toggle */}

@@ -95,6 +95,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (err: any) {
         console.error('Topup error:', err);
-        return res.status(500).json({ error: 'Gagal membuat transaksi top-up.' });
+        const errorMsg = err.message?.includes('MAYAR_API_KEY') 
+            ? err.message 
+            : 'Gagal membuat transaksi top-up.';
+        return res.status(500).json({ error: errorMsg });
     }
 }

@@ -51,7 +51,7 @@ export const PaymentWaiting: React.FC = () => {
                 } else if (data.status === 'failed' || data.status === 'expired') {
                     if (pollingInterval.current) clearInterval(pollingInterval.current);
                     toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi pembayaran Anda.' });
-                    navigate('/pending');
+                    navigate('/pending-payment');
                 }
             } catch (err) {
                 console.error('Polling error:', err);
@@ -115,7 +115,7 @@ export const PaymentWaiting: React.FC = () => {
                 {!isSuccess && (
                     <div className="mt-6 text-center">
                         <button
-                            onClick={() => navigate('/pending')}
+                            onClick={() => navigate('/pending-payment')}
                             className="text-gray-400 hover:text-gray-600 text-sm font-medium transition-colors"
                         >
                             Ke Halaman Status Manual

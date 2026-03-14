@@ -14,22 +14,72 @@ export const PaymentPending: React.FC = () => {
     const [pendingOrderId, setPendingOrderId] = useState('');
     const [pendingUrl, setPendingUrl] = useState('');
     const [pendingSnapToken, setPendingSnapToken] = useState('');
+    const [pendingAmount, setPendingAmount] = useState<number | null>(null);
+    const [pendingGateway, setPendingGateway] = useState<string>('');
+    const [pendingPlan, setPendingPlan] = useState<string>('');
 
     useEffect(() => {
-        const email = localStorage.getItem('visora_pending_email') || '';
-        const orderId = localStorage.getItem('visora_pending_order_id') || new URLSearchParams(window.location.search).get('orderId') || '';
-        const url = localStorage.getItem('visora_pending_url') || '';
-        const snapToken = localStorage.getItem('visora_pending_snap_token') || '';
+        let pollingTimer: ReturnType<typeof setInterval> | null = null;
+        let isMounted = true;
 
-        setPendingEmail(email);
-        setPendingOrderId(orderId);
-        setPendingUrl(url);
-        setPendingSnapToken(snapToken);
-        
-        // Auto-check on load if we have an order id
-        if (orderId) {
-            checkStatus(orderId, email, true);
-        }
+        const loadPendingDetails = async () => {
+            const email = localStorage.getItem('visora_pending_email') || '';
+            let orderId = localStorage.getItem('visora_pending_order_id') || new URLSearchParams(window.location.search).get('orderId') || '';
+            let url = localStorage.getItem('visora_pending_url') || '';
+            let snapToken = localStorage.getItem('visora_pending_snap_token') || '';
+            let amount = null;
+            let gateway = '';
+
+            // Attempt to fetch from latest-pending if we have a session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                try {
+                    const res = await fetch('/api/payment/latest-pending', {
+                        headers: { Authorization: `Bearer ${session.access_token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.hasPending) {
+                            if (!orderId) orderId = data.orderId;
+                            url = data.redirectUrl || url;
+                            snapToken = data.snapToken || snapToken;
+                            amount = data.amount;
+                            gateway = data.gateway;
+                            if (data.planType) setPendingPlan(data.planType);
+                            if (session.user.email) {
+                                setPendingEmail(session.user.email);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch latest pending:', e);
+                }
+            }
+
+            setPendingEmail(prev => prev || email);
+            setPendingOrderId(orderId);
+            setPendingUrl(url);
+            setPendingSnapToken(snapToken);
+            setPendingAmount(amount);
+            setPendingGateway(gateway);
+            
+            // Initial check + start auto-polling every 3 seconds
+            if (orderId) {
+                checkStatus(orderId, email, true);
+                pollingTimer = setInterval(() => {
+                    if (isMounted) {
+                        checkStatus(orderId, email, true);
+                    }
+                }, 3000);
+            }
+        };
+
+        loadPendingDetails();
+
+        return () => {
+            isMounted = false;
+            if (pollingTimer) clearInterval(pollingTimer);
+        };
     }, []);
 
     const checkStatus = async (orderIdToCheck: string, emailToCheck: string, isAutoCheck = false) => {
@@ -105,18 +155,40 @@ export const PaymentPending: React.FC = () => {
     }, []);
 
     const handleContinuePayment = () => {
-        if (pendingUrl) {
+        if (pendingGateway === 'mayar' && pendingUrl) {
             window.location.href = pendingUrl;
-        } else if (pendingSnapToken && window.snap) {
+        } else if (pendingGateway === 'midtrans' && pendingSnapToken && window.snap) {
             window.snap.pay(pendingSnapToken, {
                 onSuccess: () => { checkStatus(pendingOrderId, pendingEmail, true); },
                 onPending: () => { toast({ type: 'info', title: 'Pembayaran Pending', description: 'Selesaikan pembayaran sebelum batas waktu.' }); },
                 onError: () => { toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' }); },
+                onClose: () => { toast({ type: 'info', title: 'Pembayaran Dibatalkan', description: 'Pilih Lanjutkan Pembayaran untuk mencoba lagi.' }); }
+            });
+        } else if (pendingUrl) {
+            // Fallback if gateway state is missing
+            window.location.href = pendingUrl;
+        } else if (pendingSnapToken && window.snap) {
+            // Fallback for Midtrans
+            window.snap.pay(pendingSnapToken, {
+                onSuccess: () => { checkStatus(pendingOrderId, pendingEmail, true); },
+                onPending: () => { toast({ type: 'info', title: 'Pembayaran Pending', description: 'Selesaikan pembayaran sebelum batas waktu.' }); },
+                onError: () => { toast({ type: 'error', title: 'Pembayaran Gagal', description: 'Silakan coba lagi.' }); },
+                onClose: () => { toast({ type: 'info', title: 'Pembayaran Dibatalkan', description: 'Pilih Lanjutkan Pembayaran untuk mencoba lagi.' }); }
             });
         } else {
             toast({ type: 'warning', title: 'Link Tidak Ditemukan', description: 'Silakan pesan ulang dari halaman form.' });
-            navigate('/formorder');
+            window.location.href = '/formorderauth';
         }
+    };
+
+    const handleClose = async () => {
+        localStorage.removeItem('visora_pending_order_id');
+        localStorage.removeItem('visora_pending_url');
+        localStorage.removeItem('visora_pending_email');
+        localStorage.removeItem('visora_pending_pass');
+        localStorage.removeItem('visora_pending_snap_token');
+        await supabase.auth.signOut();
+        window.location.href = '/';
     };
 
     return (
@@ -124,17 +196,10 @@ export const PaymentPending: React.FC = () => {
             
             {/* Top Back Button */}
             <button 
-                onClick={() => {
-                    localStorage.removeItem('visora_pending_order_id');
-                    localStorage.removeItem('visora_pending_url');
-                    localStorage.removeItem('visora_pending_email');
-                    localStorage.removeItem('visora_pending_pass');
-                    localStorage.removeItem('visora_pending_snap_token');
-                    navigate('/formorder');
-                }} 
+                onClick={handleClose} 
                 className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-black transition-colors font-medium bg-white px-4 py-2 rounded-full shadow-sm"
             >
-                <ArrowLeft size={18} /> Kembali
+                <ArrowLeft size={18} /> Tutup
             </button>
 
             <div className={`max-w-md w-full bg-white p-8 rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 ${isSuccess ? 'border-4 border-green-500' : 'border border-gray-100'}`}>
@@ -166,10 +231,28 @@ export const PaymentPending: React.FC = () => {
                         <span className="text-gray-500">Email Akun:</span>
                         <span className="font-semibold text-gray-800">{pendingEmail || '-'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between mb-2">
                         <span className="text-gray-500">Order ID:</span>
                         <span className="font-mono text-gray-800">{pendingOrderId || '-'}</span>
                     </div>
+                    {pendingPlan && (
+                        <div className="flex justify-between mb-2">
+                            <span className="text-gray-500">Plan:</span>
+                            <span className="font-semibold text-gray-800 capitalize">{pendingPlan}</span>
+                        </div>
+                    )}
+                    {pendingAmount !== null && (
+                        <div className="flex justify-between mb-2">
+                            <span className="text-gray-500">Total Biaya:</span>
+                            <span className="font-semibold text-gray-800">Rp {pendingAmount.toLocaleString('id-ID')}</span>
+                        </div>
+                    )}
+                    {pendingGateway && (
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Metode:</span>
+                            <span className="font-semibold text-gray-800 capitalize">{pendingGateway}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}
@@ -199,6 +282,15 @@ export const PaymentPending: React.FC = () => {
                             className="w-full bg-[#0071e3] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#005bb5] transition-all shadow-md shadow-blue-500/20"
                         >
                             Lanjutkan Pembayaran
+                        </button>
+                    )}
+                    
+                    {!isSuccess && (
+                        <button 
+                            onClick={handleClose}
+                            className="w-full bg-white text-gray-600 py-4 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all border border-gray-200"
+                        >
+                            Tutup
                         </button>
                     )}
                 </div>

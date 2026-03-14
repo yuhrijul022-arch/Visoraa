@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         if (!supabase) return res.status(500).json({ error: 'Server configuration error.' });
 
-        const { email, username, password, promoCode, planType = 'basic', paymentType = 'plan' } = req.body;
+        const { email, username, password, whatsapp, promoCode, planType = 'basic', paymentType = 'plan' } = req.body;
 
         let userId: string | undefined;
         let authHeader = req.headers.authorization;
@@ -114,16 +114,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             amountIdr: totalPrice,
             paymentType: paymentType,
             planType: paymentType === 'plan' ? planType : undefined,
-            redirectPath: '/pending'
+            redirectPath: '/pending-payment'
         });
 
-        // Ensure user row in Drizzle (ignored if exists)
-        await db.insert(users).values({
-            id: userId,
-            email,
-            name: username,
-            credits: 0
-        }).onConflictDoNothing();
+        // Ensure user row in Drizzle (ignored if exists, but we update whatsapp if provided)
+        await db.insert(users)
+            .values({
+                id: userId,
+                email,
+                name: username,
+                whatsapp: whatsapp || null,
+                credits: 0
+            })
+            .onConflictDoUpdate({
+                target: users.id,
+                set: {
+                    whatsapp: whatsapp || null,
+                    name: username // Optional sync just in case
+                }
+            });
 
         // Save transaction to Drizzle payments table
         await db.insert(payments).values({
@@ -155,6 +164,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (err: any) {
         console.error('Create transaction error:', err);
-        return res.status(500).json({ error: 'Gagal membuat transaksi.' });
+        const errorMsg = err.message?.includes('MAYAR_API_KEY') 
+            ? err.message 
+            : 'Gagal membuat transaksi.';
+        return res.status(500).json({ error: errorMsg });
     }
 }

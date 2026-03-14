@@ -13,6 +13,7 @@ import { LandingPage } from './src/components/LandingPage';
 import { LPForm } from './src/components/LPForm';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { FormOrderAuth } from './src/pages/FormOrderAuth';
+import { AuthResolver } from './src/components/AuthResolver';
 
 // Admin Imports
 import AdminGate from './src/components/AdminGate';
@@ -36,6 +37,7 @@ root.render(
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/lpform" element={<LPForm />} />
+            <Route path="/auth/resolve" element={<AuthResolver />} />
             <Route path="/dashboard" element={
               <AuthGate>
                 {(user) => <App user={user} />}
@@ -44,7 +46,7 @@ root.render(
             <Route path="/formorder" element={<UnifiedCheckoutComponent />} />
             <Route path="/formorderauth" element={<FormOrderAuth />} />
             <Route path="/success" element={<PaymentSuccess />} />
-            <Route path="/pending" element={<PaymentPending />} />
+            <Route path="/pending-payment" element={<PaymentPending />} />
             <Route path="/payment/waiting" element={<PaymentWaiting />} />
             <Route path="/billing" element={<BillingPage />} />
             

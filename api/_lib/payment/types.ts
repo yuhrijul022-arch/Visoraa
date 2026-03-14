@@ -11,6 +11,7 @@ export interface CreateTransactionParams {
   creditsQty?: number;
   planType?: PlanType;
   redirectPath?: string;
+  description?: string;
 }
 
 export interface PaymentProviderResult {
