@@ -25,14 +25,13 @@ export class MayarProvider implements PaymentProvider {
     // Set expiration 24 hours from now in ISO 8601 format
     const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    const redirectPath = params.redirectPath || '/dashboard';
     const body = {
       name: nameStr,
       email: params.email,
       amount: params.amountIdr,
       mobile: "0000000000",
       description: `Visora ${params.paymentType} - Order ${params.orderId}`,
-      redirectURL: `${siteUrl}${redirectPath}?payment=success&orderId=${params.orderId}`,
+      redirectURL: `${siteUrl}/payment/waiting?orderId=${params.orderId}`,
       expiredAt: expiredAt,
     };
 

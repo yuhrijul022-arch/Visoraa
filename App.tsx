@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { DesignInputs, FileData, LayoutBlueprint, StyleProfile, AppUser } from './types';
-import { generateViaAPI, fetchRecentGenerations } from './src/lib/generateService';
 import { useCredits } from './src/lib/credits';
 import { supabase } from './src/lib/supabaseClient';
-import BottomControlBar from './components/BottomControlBar';
-import ResultDisplay from './components/ResultDisplay';
-import { ProfileMenu } from './src/components/ProfileMenu';
-import { TopUpModal } from './src/components/TopUpModal';
 import { useToast } from './src/components/ui/ToastProvider';
-import { FileImage, Wand2, X, Info, Download, ArrowRight, Settings2, Box, Sparkles, Zap, Lock, Loader2, AlertCircle, Type, Code } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+
+const BottomControlBar = lazy(() => import('./components/BottomControlBar'));
+const ResultDisplay = lazy(() => import('./components/ResultDisplay'));
+const ProfileMenu = lazy(() => import('./src/components/ProfileMenu').then(m => ({ default: m.ProfileMenu })));
+const TopUpModal = lazy(() => import('./src/components/TopUpModal').then(m => ({ default: m.TopUpModal })));
+
+const SettingsModal = lazy(() => import('./src/components/SettingsModal'));
+const UpgradeModal = lazy(() => import('./src/components/UpgradeModal'));
+const WelcomeModal = lazy(() => import('./src/components/WelcomeModal'));
 
 const INITIAL_INPUTS: DesignInputs = {
   brandName: "",
@@ -29,14 +33,12 @@ interface AppProps {
 }
 
 export default function App({ user }: AppProps) {
-  // Restore step from localStorage (only 'upload' or 'done' are safe to restore)
   const [step, setStep] = useState<'upload' | 'analyzing' | 'preview' | 'generating' | 'done'>(() => {
     const saved = localStorage.getItem('visora_last_step');
     if (saved === 'done') return 'done';
     return 'upload';
   });
 
-  // Restore inputs (settings + prompt) from localStorage
   const [inputs, setInputs] = useState<DesignInputs>(() => {
     try {
       const saved = localStorage.getItem('visora_studio_settings');
@@ -54,58 +56,50 @@ export default function App({ user }: AppProps) {
   const [blueprint, setBlueprint] = useState<LayoutBlueprint | null>(null);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
 
-    // Restore image URLs from localStorage
-    const [imageUrls, setImageUrls] = useState<string[]>(() => {
-      try {
-        const saved = localStorage.getItem('visora_image_urls');
-        if (saved) return JSON.parse(saved);
-      } catch { /* ignore */ }
-      return [];
-    });
+  const [imageUrls, setImageUrls] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('visora_image_urls');
+      if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return [];
+  });
   
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showJson, setShowJson] = useState(false);
 
-  // Auto-save inputs to localStorage on every change
   useEffect(() => {
     localStorage.setItem('visora_studio_settings', JSON.stringify(inputs));
   }, [inputs]);
 
-  // Auto-save step to localStorage
   useEffect(() => {
     localStorage.setItem('visora_last_step', step);
   }, [step]);
 
-  // Auto-save image URLs to localStorage
   useEffect(() => {
     localStorage.setItem('visora_image_urls', JSON.stringify(imageUrls));
   }, [imageUrls]);
 
-  // Restore images from Supabase if step=done but no URLs in localStorage
   useEffect(() => {
     if (step === 'done' && imageUrls.length === 0 && user?.uid) {
-      fetchRecentGenerations(user.uid).then(urls => {
-        if (urls.length > 0) {
-          setImageUrls(urls);
-        } else {
-          // No images found, go back to upload
-          setStep('upload');
-        }
+      import('./src/lib/generateService').then(({ fetchRecentGenerations }) => {
+        fetchRecentGenerations(user.uid).then((urls: string[]) => {
+          if (urls.length > 0) {
+            setImageUrls(urls);
+          } else {
+            setStep('upload');
+          }
+        });
       });
     }
   }, []);
 
-  // Fetch user from DB to know plan and infiniteEnabled
   useEffect(() => {
     if (user?.uid) {
       supabase.from('users').select('*').eq('id', user.uid).single().then(({ data }) => {
         setDbUser(data);
         if (data && data.plan && localStorage.getItem('visora_welcomed') !== 'true') {
             const activatedAt = data.plan_activated_at ? new Date(data.plan_activated_at).getTime() : 0;
-            // Welcome msg for users activated in the last 24h
             if (Date.now() - activatedAt < 24 * 60 * 60 * 1000) {
                setShowWelcomeModal(true);
             } else {
@@ -130,7 +124,6 @@ export default function App({ user }: AppProps) {
       return;
     }
 
-    // Credit check
     if (creditState.credits < totalCost) {
       toast({ type: 'error', title: 'Credit Tidak Cukup', description: `Dibutuhkan ${totalCost} credit. Saldo Anda: ${creditState.credits} credit.` });
       setShowTopUp(true);
@@ -173,13 +166,14 @@ export default function App({ user }: AppProps) {
     setStep('generating');
     setError(null);
     try {
+      const { generateViaAPI } = await import('./src/lib/generateService');
       const result = await generateViaAPI(productImage, refImage, inputs, blueprint, styleProfile);
 
       if (result.status === 'FAILED') {
         throw new Error(result.error || 'Generation failed');
       }
 
-      const urls = result.outputs.map(o => o.downloadUrl);
+      const urls = result.outputs.map((o: any) => o.downloadUrl);
       if (urls.length > 0) {
         setImageUrls(urls);
         setStep('done');
@@ -225,16 +219,9 @@ export default function App({ user }: AppProps) {
     setStyleProfile(null);
     setImageUrls([]);
     setError(null);
-    // Clear persisted state
     localStorage.removeItem('visora_last_step');
     localStorage.removeItem('visora_image_urls');
     localStorage.removeItem('visora_studio_settings');
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    if (isLocked) return;
-    const { name, value } = e.target;
-    setInputs(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -242,7 +229,6 @@ export default function App({ user }: AppProps) {
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(30,30,40,0.4),rgba(0,0,0,1))] -z-10 pointer-events-none" />
 
       <main className="flex-1 overflow-y-auto relative scrollbar-hide">
-        {/* Header */}
         <div className="p-6 md:p-8 flex justify-between items-center pointer-events-none sticky top-0 z-10 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-[2px]">
           <div className="flex items-center gap-3 pointer-events-auto select-none">
             <svg width="34" height="24" viewBox="0 0 34 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
@@ -258,11 +244,12 @@ export default function App({ user }: AppProps) {
                 Reset
               </button>
             )}
-            <ProfileMenu user={user} credits={creditState.credits} onTopUp={() => setShowTopUp(true)} plan={dbUser?.plan} />
+            <Suspense fallback={<div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />}>
+              <ProfileMenu user={user} credits={creditState.credits} onTopUp={() => setShowTopUp(true)} plan={dbUser?.plan} />
+            </Suspense>
           </div>
         </div>
 
-        {/* Central Display */}
         <div className="flex flex-col items-center justify-center p-4 min-h-[60vh]">
           {error && (
             <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-sm" style={{ animation: 'fadeInDown 0.3s ease-out' }}>
@@ -345,226 +332,70 @@ export default function App({ user }: AppProps) {
 
           {step === 'done' && imageUrls.length > 0 && (
             <div className="pb-32 w-full max-w-6xl mx-auto">
-              <ResultDisplay
-                imageUrls={imageUrls}
-                blueprint={blueprint}
-                styleProfile={styleProfile}
-                onReset={handleReset}
-                onDownload={() => { }}
-              />
+              <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-500" size={48} /></div>}>
+                <ResultDisplay
+                  imageUrls={imageUrls}
+                  blueprint={blueprint}
+                  styleProfile={styleProfile}
+                  onReset={handleReset}
+                  onDownload={() => { }}
+                />
+              </Suspense>
             </div>
           )}
         </div>
       </main>
 
-      {/* Bottom Control Bar */}
       {step !== 'done' && (
-        <BottomControlBar
-          step={step}
-          inputs={inputs}
-          setInputs={setInputs}
-          productImage={productImage}
-          setProductImage={setProductImage}
-          refImage={refImage}
-          setRefImage={setRefImage}
-          onAnalyze={handleAnalyze}
-          onGenerate={handleGenerate}
-          isLocked={isLocked}
-          isInfiniteEnabled={dbUser?.plan === 'pro' && dbUser?.infiniteEnabled}
-          onOpenSettings={() => setShowSettings(true)}
-        />
+        <Suspense fallback={<div className="h-24 bg-[#111] animate-pulse absolute bottom-0 w-full" />}>
+          <BottomControlBar
+            step={step}
+            inputs={inputs}
+            setInputs={setInputs}
+            productImage={productImage}
+            setProductImage={setProductImage}
+            refImage={refImage}
+            setRefImage={setRefImage}
+            onAnalyze={handleAnalyze}
+            onGenerate={handleGenerate}
+            isLocked={isLocked}
+            isInfiniteEnabled={dbUser?.plan === 'pro' && dbUser?.infiniteEnabled}
+            onOpenSettings={() => setShowSettings(true)}
+          />
+        </Suspense>
       )}
 
-      {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-          <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
-
-            <div className="flex items-center justify-between p-6 border-b border-white/5">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Settings2 size={18} className="text-blue-500" /> Studio Settings
-              </h3>
-              <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                    <Box size={14} /> Output Specs
-                  </h4>
-
-                  <div>
-                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">Aspect Ratio</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {['1:1', '4:5', '9:16', '16:9'].map(r => (
-                        <button key={r} onClick={() => setInputs(prev => ({ ...prev, ratio: r as any }))}
-                          className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${inputs.ratio === r ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-medium text-gray-400 mb-2 block flex justify-between">
-                      <span>Style Fidelity</span>
-                      <span className="text-blue-400">{inputs.matchStrength}%</span>
-                    </label>
-                    <input type="range" min="0" max="100" value={inputs.matchStrength} onChange={(e) => setInputs(prev => ({ ...prev, matchStrength: parseInt(e.target.value) }))}
-                      className="w-full accent-blue-500 h-1 bg-gray-800 rounded-full appearance-none cursor-pointer" />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">Variations</label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4].map(q => (
-                        <button key={q} onClick={() => setInputs(prev => ({ ...prev, quantity: q }))}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all ${inputs.quantity === q ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                          {q}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Mode Selector in Settings */}
-                  <div>
-                    <label className="text-[10px] font-medium text-gray-400 mb-2 block">AI Model</label>
-                    <div className="flex gap-2">
-                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'standard' }))}
-                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'standard' ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                        <Zap size={10} /> Standard
-                      </button>
-                      <button onClick={() => setInputs(prev => ({ ...prev, mode: 'pro' }))}
-                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'pro' ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                        <Sparkles size={10} /> Pro
-                      </button>
-                      {dbUser?.plan === 'pro' || dbUser?.infiniteEnabled ? (
-                          <button onClick={() => setInputs(prev => ({ ...prev, mode: 'infinite' }))}
-                              className={`flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 ${inputs.mode === 'infinite' ? 'bg-orange-600/20 border-orange-500/50 text-orange-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}`}>
-                              <Sparkles size={10} className="text-orange-400" /> Infinite
-                          </button>
-                      ) : (
-                          <button onClick={() => toast({ type: 'warning', title: 'Fitur Terkunci', description: 'Infinite Mode eksklusif untuk pengguna paket Pro.' })}
-                              className="flex-1 py-2 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-1 bg-white/5 border-transparent text-gray-500 hover:bg-white/10 relative overflow-hidden">
-                              <Lock size={10} className="text-gray-500" /> Infinite
-                          </button>
-                      )}
-                    </div>
-                    <div className="text-[9px] text-gray-500 mt-2 text-center font-medium">
-                      {inputs.mode === 'infinite' ? '0 Credits (Unlimited untuk PRO) • Kecepatan Tinggi' : 
-                      (inputs.mode === 'pro' ? '55-65 Credits per Gambar • Kualitas Fotorealistik' : '30-37 Credits per Gambar • Kualitas Menengah')}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                      <Type size={14} /> Text & Copy
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        {inputs.textMode === 'off' ? 'Disabled' : 'Enabled'}
-                      </span>
-                      <button
-                        onClick={() => setInputs(prev => ({ ...prev, textMode: prev.textMode === 'off' ? 'on' : 'off' }))}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${inputs.textMode !== 'off' ? 'bg-blue-600' : 'bg-gray-700'}`}
-                      >
-                        <span className={`${inputs.textMode !== 'off' ? 'translate-x-4' : 'translate-x-1'} inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className={`space-y-3 transition-all duration-300 ${inputs.textMode === 'off' ? 'opacity-40 blur-[1px] pointer-events-none grayscale select-none' : ''}`}>
-                    <input name="brandName" disabled={inputs.textMode === 'off'} value={inputs.brandName} onChange={handleInputChange} placeholder="Brand Name" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
-                    <input name="headline" disabled={inputs.textMode === 'off'} value={inputs.headline} onChange={handleInputChange} placeholder="Headline" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
-                    <div className="flex gap-2">
-                      <input name="price" disabled={inputs.textMode === 'off'} value={inputs.price} onChange={handleInputChange} placeholder="Price" className="w-1/3 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
-                      <input name="cta" disabled={inputs.textMode === 'off'} value={inputs.cta} onChange={handleInputChange} placeholder="CTA" className="w-2/3 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-blue-500 outline-none transition-colors" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {(blueprint || styleProfile) && (
-                <div className="border-t border-white/5 pt-6">
-                  <button
-                    onClick={() => setShowJson(!showJson)}
-                    className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors mb-4"
-                  >
-                    <Code size={14} /> Blueprint Logic
-                  </button>
-
-                  {showJson && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-                      <div className="bg-black/50 p-4 rounded-xl border border-white/5 overflow-auto max-h-48 scrollbar-hide">
-                        <div className="text-[10px] text-blue-400 font-bold mb-2">STYLE DNA</div>
-                        <pre className="text-[10px] text-gray-500 font-mono whitespace-pre-wrap">{JSON.stringify(styleProfile, null, 2)}</pre>
-                      </div>
-                      <div className="bg-black/50 p-4 rounded-xl border border-white/5 overflow-auto max-h-48 scrollbar-hide">
-                        <div className="text-[10px] text-blue-400 font-bold mb-2">LAYOUT STRUCTURE</div>
-                        <pre className="text-[10px] text-gray-500 font-mono whitespace-pre-wrap">{JSON.stringify(blueprint, null, 2)}</pre>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={null}>
+          <SettingsModal 
+            onClose={() => setShowSettings(false)}
+            inputs={inputs}
+            setInputs={setInputs}
+            dbUser={dbUser}
+            blueprint={blueprint}
+            styleProfile={styleProfile}
+            toast={toast}
+          />
+        </Suspense>
       )}
 
-      {/* Upgrade Modal */}
       {showUpgradeModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-              <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20">
-                      <Sparkles size={28} className="text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Upgrade ke Pro</h3>
-                  <p className="text-gray-400 text-sm mb-6">Nikmati akses tanpa batas dengan Infinite Mode, resolusi Ultra HD (4K), dan template eksklusif.</p>
-                  
-                  <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Infinite Generate Mode</span></div>
-                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Resolusi 4K & Ultra HD</span></div>
-                      <div className="flex items-center gap-3 text-sm text-left"><div className="text-green-400"><Zap size={16} /></div><span className="text-gray-300">Jalur Cepat (Prioritas Server)</span></div>
-                  </div>
-
-                  <div className="flex gap-3">
-                      <button onClick={() => setShowUpgradeModal(false)} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors">Nanti</button>
-                      <button onClick={() => { setShowUpgradeModal(false); window.location.href = '/formorderauth?plan=pro'; }} className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">Upgrade Sekarang</button>
-                  </div>
-              </div>
-          </div>
+        <Suspense fallback={null}>
+          <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+        </Suspense>
       )}
 
-      {/* Welcome Modal */}
       {showWelcomeModal && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-              <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-md p-8 shadow-2xl text-center" style={{ animation: 'fadeInDown 0.2s ease-out' }}>
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full mx-auto flex items-center justify-center mb-6 shadow-lg shadow-green-500/20">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Selamat Datang di Visora!</h3>
-                  <p className="text-gray-400 text-sm mb-6">Pendaftaran Anda telah berhasil diproses. Saldo credits bonus awal telah ditambahkan ke akun Anda.</p>
-                  
-                  <div className="bg-white/5 rounded-2xl p-4 mb-8">
-                      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Paket Aktif</p>
-                      <p className="text-lg font-bold text-white">{dbUser?.plan === 'pro' ? 'Pro Plan' : 'Basic Plan'}</p>
-                  </div>
-
-                  <button onClick={() => { localStorage.setItem('visora_welcomed', 'true'); setShowWelcomeModal(false); }} className="w-full py-4 rounded-xl bg-white text-black text-lg font-bold hover:bg-gray-200 transition-colors">
-                      Mulai Mendesain Sekarang
-                  </button>
-              </div>
-          </div>
+        <Suspense fallback={null}>
+          <WelcomeModal onClose={() => setShowWelcomeModal(false)} dbUser={dbUser} />
+        </Suspense>
       )}
 
-      {/* Top Up Modal */}
-      <TopUpModal isOpen={showTopUp} onClose={() => setShowTopUp(false)} onSuccess={() => creditState.startFastPolling()} />
+      {showTopUp && (
+        <Suspense fallback={null}>
+          <TopUpModal isOpen={showTopUp} onClose={() => setShowTopUp(false)} onSuccess={() => creditState.startFastPolling()} />
+        </Suspense>
+      )}
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

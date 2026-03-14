@@ -168,7 +168,7 @@ export const FormOrderAuth: React.FC = () => {
                                 </div>
                                 <span style={{ fontWeight: 700 }}>Rp99rb</span>
                             </div>
-                            <span style={{ fontSize: '0.8rem', color: '#86868b', paddingLeft: 26 }}>1000+ Template & Standard Resolution</span>
+                            <span style={{ fontSize: '0.8rem', color: '#86868b', paddingLeft: 26 }}>Welcome Bonus: 250 credits<br/>1000+ Template & Standard Resolution</span>
                         </label>
 
                         {/* Pro */}
@@ -185,7 +185,7 @@ export const FormOrderAuth: React.FC = () => {
                                 </div>
                                 <span style={{ fontWeight: 700 }}>Rp145rb</span>
                             </div>
-                            <span style={{ fontSize: '0.8rem', color: '#86868b', paddingLeft: 26 }}>Infinite Generate & 4K Resolution</span>
+                            <span style={{ fontSize: '0.8rem', color: '#86868b', paddingLeft: 26 }}>Welcome Bonus: 400 credits<br/>Infinite Generate & 4K Resolution</span>
                             <input type="radio" value="basic" checked={plan === 'basic'} onChange={() => setPlan('basic')} style={{ display: 'none' }} />
                             <input type="radio" value="pro" checked={plan === 'pro'} onChange={() => setPlan('pro')} style={{ display: 'none' }} />
                         </label>

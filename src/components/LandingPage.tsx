@@ -40,7 +40,7 @@ const BENEFITS_PRO = [
     'Generate gambar tanpa limit dengan Infinite Mode',
     'Resolusi tinggi (4K & Ultra HD)',
     'Prioritas antrean server (Jalur Cepat)',
-    'Akses eksklusif template Pro',
+    'Akses style desain eksklusif',
     'Akses selamanya (lifetime)',
 ];
 
@@ -105,8 +105,8 @@ export const LandingPage: React.FC = () => {
             {/* ─── HERO ─── */}
             <section className="lp-hero-section">
                 <div className="lp-container">
-                    <h1 className="lp-hero-headline">Ubah Foto Produk Biasa Jadi Konten Jualan Berkelas dalam 5 Detik</h1>
-                    <p className="lp-hero-subheadline">Tanpa Skill Desain. Tanpa Sewa Desainer Mahal. Cukup Upload Foto &amp; Referensi, Biarkan AI Visora Mengubahnya Jadi Desain Profesional.</p>
+                    <h1 className="lp-hero-headline">Bikin Konten Promosi Berkelas dalam 5 Detik</h1>
+                    <p className="lp-hero-subheadline">Tanpa Skill Desain - Tanpa Sewa Desainer Mahal - Cukup Upload Foto &amp; Referensi, Biarkan AI Visora Mengubahnya Jadi Desain Profesional</p>
                     <p className="lp-hero-highlight">Hasil 90% mirip referensi desain yang kamu mau!</p>
                     <div style={{ marginTop: 16 }}><a href="/formorder" className="lp-btn lp-btn-lg lp-btn-dark">Cobain Visora Sekarang</a></div>
 
@@ -133,8 +133,8 @@ export const LandingPage: React.FC = () => {
             <section className="lp-problem-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Bosan Foto Produk Terlihat 'Amatir' &amp; Kurang Menjual?</h2>
-                        <p>Cari referensi di Pinterest sudah capek-capek, pas eksekusi di Canva hasilnya zonk.</p>
+                        <h2>Konten Promosi Terlihat 'Amatir' &amp; Kurang Menjual?</h2>
+                        <p>Cape-cape cari referensi di Pinterest, pas eksekusi di Canva hasilnya zonk.</p>
                     </div>
                     <div className="lp-pain-grid">
                         {PAIN_POINTS.map((p, i) => (
@@ -149,7 +149,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-container">
                     <div className="lp-section-header">
                         <h2>Satu Tools, Ribuan Gaya Visual Tanpa Batas</h2>
-                        <p>Visora bukan sekadar AI desain biasa. Kami menggabungkan tiga kekuatan utama untuk bisnis Anda:</p>
+                        <p>Visora bukan sekadar AI desain biasa, Kami menggabungkan tiga kekuatan utama untuk bisnis Anda:</p>
                     </div>
                     <div className="lp-solution-grid">
                         {SOLUTIONS.map((s, i) => (
@@ -220,12 +220,12 @@ export const LandingPage: React.FC = () => {
             <section className="lp-pricing-section" id="pricing-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Satu Kali Bayar. Pilih Paket yang Tepat Untukmu.</h2>
-                        <p>Akses selamanya, tanpa biaya langganan bulanan tersembunyi.</p>
+                        <h2>Satu Kali Bayar, Pilih Paket yang Cocok Buat Kamu!</h2>
+                        <p>Akses selamanya, tanpa biaya langganan bulanan!</p>
                         <div className="lp-counter-bar" style={{ maxWidth: 400, margin: '20px auto 14px' }}>
                             <div className="lp-counter-fill" style={{ width: `${progress}%` }} />
                         </div>
-                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>🔥 {userCount} / 150 user pertama sudah bergabung. Harga naik sebentar lagi.</p>
+                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>🔥 {userCount} / 150 user pertama sudah pake Visora, Harga bakalan naik! Siapa cepat dia dapat!</p>
                     </div>
 
                     <div className="lp-pricing-grid">
@@ -252,7 +252,7 @@ export const LandingPage: React.FC = () => {
                         <div className="lp-pricing-card lp-pricing-pro">
                             <div className="lp-promo-badge" style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)' }}>Paling Laris</div>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#fff' }}>Pro</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Akses tanpa batas untuk bisnis & agency.</p>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Akses tanpa batas untuk bisnis & agency</p>
                             <div style={{ marginBottom: 24 }}>
                                 <span className="lp-original-price" style={{ color: 'rgba(255,255,255,0.5)' }}>Rp 250.000</span>
                                 <div className="lp-promo-price" style={{ color: '#fff' }}>Rp 145.000</div>
@@ -311,8 +311,8 @@ export const LandingPage: React.FC = () => {
             {/* ─── FINAL PUSH ─── */}
             <section className="lp-final-section">
                 <div className="lp-container" style={{ textAlign: 'center' }}>
-                    <h2>Berhenti Membuang Waktu untuk Desain yang Tidak Menghasilkan Penjualan.</h2>
-                    <p className="lp-final-sub">Amankan akses selamanya sekarang. Mulai ciptakan konten promosi yang membuat orang berhenti scrolling!</p>
+                    <h2>Berhenti Membuang Waktu untuk Desain yang Tidak Menghasilkan Penjualan</h2>
+                    <p className="lp-final-sub">Amankan akses selamanya sekarang! Mulai ciptakan konten promosi yang membuat orang berhenti scrolling!</p>
                     <a href="/formorder" className="lp-btn lp-btn-xl lp-btn-dark">Beli Visora Sekarang!</a>
                 </div>
             </section>
@@ -326,7 +326,7 @@ export const LandingPage: React.FC = () => {
                     <img className="lp-notif-img" src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_120/v1771281459/visora-variant-2-1770749485907_nbnneu.jpg" width="44" height="44" alt="" />
                     <div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{notifData.name} - {notifData.city}</div>
-                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp99.000</div>
+                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp149.000</div>
                     </div>
                 </div>
             )}

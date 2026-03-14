@@ -29,6 +29,7 @@ const USE_CASES = [
 ];
 
 const BENEFITS_BASIC = [
+    'Welcome Credits: 250 credits',
     'Generate desain statis & dinamis',
     'Akses ke seluruh template dasar',
     'Resolusi standar (1080p)',
@@ -37,6 +38,7 @@ const BENEFITS_BASIC = [
 
 const BENEFITS_PRO = [
     { text: 'Akses Fitur Infinite Mode', bold: true },
+    'Welcome Credits: 400 credits',
     'Generate gambar tanpa limit dengan Infinite Mode',
     'Resolusi tinggi (4K & Ultra HD)',
     'Prioritas antrean server (Jalur Cepat)',
