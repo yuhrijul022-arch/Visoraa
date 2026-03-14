@@ -43,6 +43,13 @@ const BENEFITS_PRO = [
     'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
+const BONUSES_PRO = [
+    { label: 'Akses Flowgen Studio — AI Foto Produk', value: 'Rp 300.000' },
+    { label: 'Preset Ramadhan Eksklusif', value: 'Rp 50.000' },
+    { label: 'AI Business Assistant', value: 'Rp 75.000' },
+    { label: 'Guide Meta Ads Blueprint', value: 'Rp 199.000' },
+];
+
 const FAQS = [
     { q: 'Apakah hasilnya benar-benar mirip referensi?', a: 'Visora meniru struktur desain, warna, dan komposisi hingga ±90%, tergantung kualitas referensi yang kamu upload.' },
     { q: 'Apakah perlu skill desain?', a: 'Tidak. Cukup upload foto produk dan referensi desain.' },
@@ -267,6 +274,23 @@ export const LPForm: React.FC = () => {
                                     );
                                 })}
                             </div>
+
+                            {/* ─ BONUS ─ */}
+                            <div className="lp-bonus-divider">
+                                <span>🎁 BONUS EKSKLUSIF — Khusus Paket Pro</span>
+                            </div>
+                            <div className="lp-benefit-list" style={{ color: '#fff', marginTop: 0 }}>
+                                {BONUSES_PRO.map((b, i) => (
+                                    <div key={i} className="lp-benefit-item" style={{display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12}}>
+                                        <span className="lp-check">✓</span>
+                                        <span style={{ color: '#fff' }}>
+                                            {b.label}
+                                            {' '}<span className="lp-bonus-price">senilai <s>{b.value}</s> <strong className="lp-bonus-free">FREE</strong></span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
                             <a href="/formorder?plan=pro" className="lp-btn lp-btn-block" style={{ background: '#fff', color: '#000' }}>Pilih Pro</a>
                         </div>
                     </div>
@@ -451,6 +475,12 @@ h3 { font-size: 1.35rem; line-height: 1.2; margin-bottom: 12px; }
 .lp-chat-section { padding: var(--lp-py-sm) 0; background: #fff; }
 .lp-wa-btn { background: #25D366; color: #fff; padding: 16px 28px; border-radius: 999px; font-weight: 700; box-shadow: 0 18px 40px rgba(37,211,102,0.25); text-decoration: none; display: inline-block; transition: transform 0.2s ease; }
 .lp-wa-btn:hover { transform: scale(1.02); }
+
+/* BONUS */
+.lp-bonus-divider { margin: 22px 0 16px; padding: 10px 16px; background: rgba(255,255,255,0.07); border-radius: 12px; border: 1px solid rgba(255,255,255,0.13); font-size: 0.8125rem; font-weight: 700; color: #fff; text-align: center; letter-spacing: 0.02em; text-transform: uppercase; }
+.lp-bonus-price { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin-left: 2px; }
+.lp-bonus-price s { color: rgba(255,255,255,0.35); text-decoration-color: rgba(255,255,255,0.3); }
+.lp-bonus-free { color: #4ade80; font-weight: 800; font-size: 0.875rem; margin-left: 2px; }
 
 /* FINAL */
 .lp-final-section { padding: calc(var(--lp-py) + 12px) 0; text-align: center; background: linear-gradient(135deg, #F5F5F7 0%, #fff 100%); }

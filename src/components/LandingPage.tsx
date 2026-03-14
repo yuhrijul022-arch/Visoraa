@@ -43,6 +43,13 @@ const BENEFITS_PRO = [
     'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
+const BONUSES_PRO = [
+    { label: 'Akses Flowgen Studio — AI Foto Produk', value: 'Rp 300.000' },
+    { label: 'Preset Ramadhan Eksklusif', value: 'Rp 50.000' },
+    { label: 'AI Business Assistant', value: 'Rp 75.000' },
+    { label: 'Guide Meta Ads Blueprint', value: 'Rp 199.000' },
+];
+
 const FAQS = [
     { q: 'Hasilnya beneran mirip referensi yang aku upload?', a: 'Iya, Visora tiru struktur, warna, dan komposisi desain sampai 90%, makin jelas referensinya makin akurat hasilnya.' },
     { q: 'Aku ga jago desain, bisa tetap pakai Visora?', a: 'Bisa banget, cukup upload foto produk kamu dan kasih referensi gaya yang kamu suka, sisanya Visora yang urus.' },
@@ -273,6 +280,23 @@ export const LandingPage: React.FC = () => {
                                     );
                                 })}
                             </div>
+
+                            {/* ─ BONUS ─ */}
+                            <div className="lp-bonus-divider">
+                                <span>🎁 BONUS EKSKLUSIF — Khusus Paket Pro</span>
+                            </div>
+                            <div className="lp-benefit-list" style={{ color: '#fff', marginTop: 0 }}>
+                                {BONUSES_PRO.map((b, i) => (
+                                    <div key={i} className="lp-benefit-item">
+                                        <span className="lp-check">✓</span>
+                                        <span style={{ color: '#fff' }}>
+                                            {b.label}
+                                            {' '}<span className="lp-bonus-price">senilai <s>{b.value}</s> <strong className="lp-bonus-free">FREE</strong></span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
                             <a href="/formorder?plan=pro" className="lp-btn lp-btn-block" style={{ background: '#fff', color: '#000' }}>Ambil Paket Pro</a>
                         </div>
                     </div>
@@ -446,6 +470,12 @@ h3 { font-size: 1.35rem; line-height: 1.2; margin-bottom: 12px; }
 .lp-benefit-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 1rem; color: var(--lp-text-primary); }
 .lp-check { color: #34C759; font-weight: 900; line-height: 1.2; flex-shrink: 0; }
 .lp-btn-block { width: 100%; padding: 18px; display: block; text-align: center; }
+
+/* BONUS */
+.lp-bonus-divider { margin: 22px 0 16px; padding: 10px 16px; background: rgba(255,255,255,0.07); border-radius: 12px; border: 1px solid rgba(255,255,255,0.13); font-size: 0.8125rem; font-weight: 700; color: #fff; text-align: center; letter-spacing: 0.02em; text-transform: uppercase; }
+.lp-bonus-price { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin-left: 2px; }
+.lp-bonus-price s { color: rgba(255,255,255,0.35); text-decoration-color: rgba(255,255,255,0.3); }
+.lp-bonus-free { color: #4ade80; font-weight: 800; font-size: 0.875rem; margin-left: 2px; }
 
 /* FAQ */
 .lp-faq-section { padding: var(--lp-py) 0; }

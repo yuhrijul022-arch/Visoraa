@@ -49,6 +49,13 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         ],
     };
 
+    const BONUSES_PRO = [
+        { label: 'Akses Flowgen Studio — AI Foto Produk', value: 'Rp 300.000' },
+        { label: 'Preset Ramadhan Eksklusif', value: 'Rp 50.000' },
+        { label: 'AI Business Assistant', value: 'Rp 75.000' },
+        { label: 'Guide Meta Ads Blueprint', value: 'Rp 199.000' },
+    ];
+
     // ── Meta Pixel ── fire on load
     useEffect(() => {
         initPixel();
@@ -262,6 +269,29 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                             </div>
                         );
                     })}
+
+                    {plan === 'pro' && (
+                        <div style={{ marginTop: 24 }}>
+                            <div style={{
+                                margin: '0 0 16px 0', padding: '10px 16px', background: 'rgba(0,0,0,0.04)', borderRadius: 12,
+                                border: '1px solid rgba(0,0,0,0.06)', fontSize: '0.8125rem', fontWeight: 700, color: '#111',
+                                textAlign: 'center', letterSpacing: '0.02em', textTransform: 'uppercase'
+                            }}>
+                                🎁 BONUS EKSKLUSIF
+                            </div>
+                            <div style={{ color: '#1d1d1f' }}>
+                                {BONUSES_PRO.map((b, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12, fontSize: '1rem' }}>
+                                        <span style={{ color: '#34C759', fontWeight: 900, lineHeight: 1.2 }}>✓</span>
+                                        <span style={{ color: '#1d1d1f', fontWeight: 500 }}>
+                                            {b.label}
+                                            {' '}<span style={{ fontSize: '0.875rem', color: '#666', marginLeft: 2 }}>senilai <s style={{ color: '#999', textDecorationColor: '#ccc' }}>{b.value}</s> <strong style={{ color: '#34c759', fontWeight: 800, marginLeft: 2 }}>FREE</strong></span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── SECTION D + E + F: ORDER FORM CARD ── */}

@@ -13,22 +13,6 @@ declare global {
     }
 }
 
-// Debounce map specifically to handle React > 18 StrictMode double-invocations
-// Allows the same event on the same path after 500ms
-const lastFiredMap = new Map<string, number>();
-
-function canFire(eventName: string): boolean {
-    const path = typeof window !== 'undefined' ? window.location.pathname : '';
-    const key = `${path}::${eventName}`;
-    const now = Date.now();
-    const last = lastFiredMap.get(key) || 0;
-    
-    if (now - last < 500) return false;
-    
-    lastFiredMap.set(key, now);
-    return true;
-}
-
 export function generateEventId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
 }
@@ -43,30 +27,37 @@ export function initPixel(): void {
 
 export function trackPageView(): void {
     if (typeof window === 'undefined' || !window.fbq) return;
-    if (!canFire('PageView')) return;
-    // Fire pageview safely. Let Facebook handle session deduplication.
-    window.fbq('track', 'PageView', {}, { eventID: generateEventId() });
+    try {
+        window.fbq('track', 'PageView', {}, { eventID: generateEventId() });
+        console.log('[Meta Pixel] Fired PageView');
+    } catch(e) { console.error(e); }
 }
 
 export function trackViewContent(data?: Record<string, any>): void {
     if (typeof window === 'undefined' || !window.fbq) return;
-    if (!canFire('ViewContent')) return;
-    window.fbq('track', 'ViewContent', data || {}, { eventID: generateEventId() });
+    try {
+        window.fbq('track', 'ViewContent', data || {}, { eventID: generateEventId() });
+        console.log('[Meta Pixel] Fired ViewContent');
+    } catch(e) { console.error(e); }
 }
 
 export function trackInitiateCheckout(eventId?: string): void {
     if (typeof window === 'undefined' || !window.fbq) return;
-    if (!canFire('InitiateCheckout')) return;
-    window.fbq('track', 'InitiateCheckout', {}, { eventID: eventId || generateEventId() });
+    try {
+        window.fbq('track', 'InitiateCheckout', {}, { eventID: eventId || generateEventId() });
+        console.log('[Meta Pixel] Fired InitiateCheckout');
+    } catch(e) { console.error(e); }
 }
 
 export function trackAddPaymentInfo(eventId?: string, value?: number): void {
     if (typeof window === 'undefined' || !window.fbq) return;
-    if (!canFire('AddPaymentInfo')) return;
-    window.fbq('track', 'AddPaymentInfo', {
-        currency: 'IDR',
-        value: value || 99000,
-    }, { eventID: eventId || generateEventId() });
+    try {
+        window.fbq('track', 'AddPaymentInfo', {
+            currency: 'IDR',
+            value: value || 99000,
+        }, { eventID: eventId || generateEventId() });
+        console.log('[Meta Pixel] Fired AddPaymentInfo');
+    } catch(e) { console.error(e); }
 }
 
 export function getFbpFbc(): { fbp: string | null; fbc: string | null } {
