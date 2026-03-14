@@ -16,7 +16,7 @@ const PAIN_POINTS = [
 
 const SOLUTIONS = [
     { title: 'Tiru Gaya Desain yang Kamu Suka', desc: 'Upload referensi dari Pinterest, Instagram, atau kompetitor kamu, Visora tiru estetikanya sampai 90% presisi dengan foto produk kamu sendiri.' },
-    { title: 'Nggak Ada Referensi? Pilih Preset', desc: 'Ratusan preset desain premium yang udah dikurasi khusus buat UMKM, tinggal pilih gaya, langsung generate.' },
+    { title: 'Ga Ada Referensi? Pilih Preset', desc: 'Ratusan preset desain premium yang udah dikurasi khusus buat UMKM, tinggal pilih gaya, langsung generate.' },
     { title: 'Foto Produk Biasa Jadi Foto Studio', desc: 'Ubah foto produk di atas meja jadi foto dengan model profesional yang keliatan nyata, tanpa sewa studio.' },
 ];
 
@@ -25,27 +25,27 @@ const USE_CASES = [
     { num: '02', title: 'Foto Produk Profesional', desc: 'Foto katalog, foto model, foto campaign tanpa sewa studio' },
     { num: '03', title: 'Poster Campaign', desc: 'Desain launching, diskon, dan promo event siap dalam hitungan detik' },
     { num: '04', title: 'Semua Skala Bisnis', desc: 'Dari UMKM rumahan, brand lokal, sampai agency bisa pakai' },
-    { num: '05', title: 'Posting Tanpa Jeda', desc: 'Nggak ada lagi alasan skip posting karena desain belum jadi' },
+    { num: '05', title: 'Posting Tanpa Jeda', desc: 'Ga ada lagi alasan skip posting karena desain belum jadi' },
 ];
 
 const BENEFITS_BASIC = [
     'Generate desain konten promosi dan foto produk',
     'Akses semua template dasar yang udah dikurasi',
     'Resolusi 1080p siap upload ke semua platform',
-    'Bayar sekali, akses selamanya, nggak ada biaya tambahan',
+    'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
 const BENEFITS_PRO = [
     { text: 'Infinite Mode — generate desain tanpa batas sama sekali', bold: true },
-    'Resolusi 4K dan Ultra HD untuk hasil paling tajam',
-    'Jalur server prioritas, nggak perlu antri lama',
-    'Akses style desain eksklusif yang nggak ada di Basic',
-    'Bayar sekali, akses selamanya, nggak ada biaya tambahan',
+    'Resolusi 4K dan Ultra HD buat hasil paling tajam',
+    'Jalur server prioritas, ga perlu antri lama',
+    'Akses style desain eksklusif yang ga ada di Basic',
+    'Bayar sekali, akses selamanya, ga ada biaya tambahan',
 ];
 
 const FAQS = [
     { q: 'Hasilnya beneran mirip referensi yang aku upload?', a: 'Iya, Visora tiru struktur, warna, dan komposisi desain sampai 90%, makin jelas referensinya makin akurat hasilnya.' },
-    { q: 'Aku nggak jago desain, bisa tetap pakai Visora?', a: 'Bisa banget, cukup upload foto produk kamu dan kasih referensi gaya yang kamu suka, sisanya Visora yang urus.' },
+    { q: 'Aku ga jago desain, bisa tetap pakai Visora?', a: 'Bisa banget, cukup upload foto produk kamu dan kasih referensi gaya yang kamu suka, sisanya Visora yang urus.' },
     { q: 'Teks di desainnya bisa diatur sendiri?', a: 'Bisa, Visora generate teks yang rapi dan langsung bisa dipakai, kamu juga bisa sesuaikan sesuai kebutuhan.' },
     { q: 'Visora cocok buat UMKM kecil-kecilan?', a: 'Justru Visora emang dirancang buat UMKM yang butuh konten visual cepat, rapi, dan konsisten tanpa ribet.' },
 ];
@@ -105,7 +105,7 @@ export const LandingPage: React.FC = () => {
             <section className="lp-hero-section">
                 <div className="lp-container">
                     <h1 className="lp-hero-headline">Upload Foto Produk Kamu, Desain Promosinya Jadi dalam 10 Detik</h1>
-                    <p className="lp-hero-subheadline">Kasih foto produk kamu, tambahin referensi gaya dari mana aja, Visora langsung generate desain promosi yang siap posting. Nggak perlu skill desain, nggak perlu desainer</p>
+                    <p className="lp-hero-subheadline">Kasih foto produk kamu, tambahin referensi gaya dari mana aja, Visora langsung generate desain promosi yang siap posting. Ga perlu skill desain, ga perlu desainer</p>
                     <p className="lp-hero-highlight">Hasilnya 90% mirip referensi yang kamu mau, bukan tebak-tebakan</p>
                     <div style={{ marginTop: 16 }}><a href="/formorder" className="lp-btn lp-btn-lg lp-btn-dark">Cobain Visora Sekarang</a></div>
 
@@ -133,7 +133,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-container">
                     <div className="lp-section-header">
                         <h2>Desain Promosimu Keliatan Asal-asalan dan Orang Langsung Skip</h2>
-                        <p>Kamu tau desain yang kamu mau, tapi hasilnya nggak pernah sesuai. Nunggu desainer lama, bayar mahal, ujungnya tetep kamu yang benerin sendiri</p>
+                        <p>Kamu tau desain yang kamu mau, tapi hasilnya ga pernah sesuai. Nunggu desainer lama, bayar mahal, ujungnya tetap kamu yang benerin sendiri</p>
                     </div>
                     <div className="lp-pain-grid">
                         {PAIN_POINTS.map((p, i) => (
@@ -148,7 +148,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-container">
                     <div className="lp-section-header">
                         <h2>Foto Produk Kamu Jadi Desain Promosi yang Sesuai Gaya Brand Kamu</h2>
-                        <p>Bukan AI desain yang generate asal-asalan. Visora pakai foto produk kamu sendiri, hasilnya bisa dikontrol</p>
+                        <p>Bukan AI desain yang generate asal-asalan. Visora pakai foto produk kamu sendiri, hasilnya bisa kamu kontrol</p>
                     </div>
                     <div className="lp-solution-grid">
                         {SOLUTIONS.map((s, i) => (
@@ -162,7 +162,7 @@ export const LandingPage: React.FC = () => {
             <section className="lp-usecases-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Satu Tools untuk Semua Kebutuhan Visual Bisnis Kamu</h2>
+                        <h2>Satu Tools buat Semua Kebutuhan Visual Bisnis Kamu</h2>
                         <p>Visual rapi tiap hari, tanpa desainer, tanpa vendor foto jutaan, tanpa ribet</p>
                     </div>
                     <div className="lp-usecases-wrap">
@@ -225,7 +225,7 @@ export const LandingPage: React.FC = () => {
                 <div className="lp-container">
                     <div className="lp-section-header">
                         <h2>Bayar Sekali, Akses Selamanya</h2>
-                        <p>Nggak ada biaya langganan, nggak ada kejutan tagihan</p>
+                        <p>Ga ada biaya langganan, ga ada kejutan tagihan</p>
                         <div className="lp-counter-bar" style={{ maxWidth: 400, margin: '20px auto 14px' }}>
                             <div className="lp-counter-fill" style={{ width: `${progress}%` }} />
                         </div>
