@@ -9,46 +9,45 @@ import {
 
 /* ───────────── data ───────────── */
 const PAIN_POINTS = [
-    'Punya referensi desain bagus, tapi hasil akhirnya beda jauh',
-    'Desainer grafis mahal dan butuh waktu berhari-hari',
-    'Mau cepat jualan, malah habis waktu urusan visual',
+    'Udah screenshot referensi bagus dari Pinterest, tapi pas dieksekusi hasilnya jauh banget',
+    'Bayar desainer ratusan ribu, nunggu 2 hari, revisi berkali-kali, capek duluan',
+    'Stok produk udah siap, konten promonya belum jadi, momen lewat begitu aja',
 ];
 
 const SOLUTIONS = [
-    { title: 'Gunakan Referensi Apapun', desc: 'Upload desain favorit Anda dari Pinterest atau kompetitor besar, Visora akan meniru estetikanya hingga 90% presisi.' },
-    { title: 'Preset Style Siap Pakai', desc: 'Malas cari referensi? Pilih dari ratusan preset desain premium siap pakai yang sudah kami kurasi khusus untuk UMKM.' },
-    { title: 'Magic Model AI', desc: 'Ubah foto produk di atas meja menjadi foto studio profesional dengan model manusia yang terlihat sangat nyata.' },
+    { title: 'Tiru Gaya Desain yang Kamu Suka', desc: 'Upload referensi dari Pinterest, Instagram, atau kompetitor kamu, Visora tiru estetikanya sampai 90% presisi dengan foto produk kamu sendiri.' },
+    { title: 'Nggak Ada Referensi? Pilih Preset', desc: 'Ratusan preset desain premium yang udah dikurasi khusus buat UMKM, tinggal pilih gaya, langsung generate.' },
+    { title: 'Foto Produk Biasa Jadi Foto Studio', desc: 'Ubah foto produk di atas meja jadi foto dengan model profesional yang keliatan nyata, tanpa sewa studio.' },
 ];
 
 const USE_CASES = [
-    { num: '01', title: 'Konten Promo', desc: 'Instagram & marketplace' },
-    { num: '02', title: 'Foto produk', desc: 'Foto katalog, foto model, foto untuk campaign' },
-    { num: '03', title: 'Campaign', desc: 'Poster diskon, launching, dan campaign' },
-    { num: '04', title: 'Bisnis', desc: 'UMKM, brand lokal, sampai agency' },
-    { num: '05', title: 'Daily Content', desc: 'Daily content tanpa ribet desain ulang' },
+    { num: '01', title: 'Konten Promo Harian', desc: 'Feed Instagram dan marketplace yang konsisten dan rapi tiap hari' },
+    { num: '02', title: 'Foto Produk Profesional', desc: 'Foto katalog, foto model, foto campaign tanpa sewa studio' },
+    { num: '03', title: 'Poster Campaign', desc: 'Desain launching, diskon, dan promo event siap dalam hitungan detik' },
+    { num: '04', title: 'Semua Skala Bisnis', desc: 'Dari UMKM rumahan, brand lokal, sampai agency bisa pakai' },
+    { num: '05', title: 'Posting Tanpa Jeda', desc: 'Nggak ada lagi alasan skip posting karena desain belum jadi' },
 ];
 
 const BENEFITS_BASIC = [
-    'Generate desain statis & dinamis',
-    'Akses ke seluruh template dasar',
-    'Resolusi standar (1080p)',
-    'Akses selamanya (lifetime)',
+    'Generate desain konten promosi dan foto produk',
+    'Akses semua template dasar yang udah dikurasi',
+    'Resolusi 1080p siap upload ke semua platform',
+    'Bayar sekali, akses selamanya, nggak ada biaya tambahan',
 ];
 
 const BENEFITS_PRO = [
-    { text: 'Akses Fitur Infinite Mode', bold: true },
-    'Generate gambar tanpa limit dengan Infinite Mode',
-    'Resolusi tinggi (4K & Ultra HD)',
-    'Prioritas antrean server (Jalur Cepat)',
-    'Akses style desain eksklusif',
-    'Akses selamanya (lifetime)',
+    { text: 'Infinite Mode — generate desain tanpa batas sama sekali', bold: true },
+    'Resolusi 4K dan Ultra HD untuk hasil paling tajam',
+    'Jalur server prioritas, nggak perlu antri lama',
+    'Akses style desain eksklusif yang nggak ada di Basic',
+    'Bayar sekali, akses selamanya, nggak ada biaya tambahan',
 ];
 
 const FAQS = [
-    { q: 'Apakah hasilnya benar-benar mirip referensi?', a: 'Visora meniru struktur desain, warna, dan komposisi hingga ±90%, tergantung kualitas referensi yang kamu upload.' },
-    { q: 'Apakah perlu skill desain?', a: 'Tidak. Cukup upload foto produk dan referensi desain.' },
-    { q: 'Apakah teks bisa diatur?', a: 'Bisa. Visora menghasilkan teks rapi dan readable yang bisa langsung dipakai.' },
-    { q: 'Cocok untuk UMKM?', a: 'Sangat. Justru dirancang untuk bisnis yang butuh visual cepat tanpa ribet.' },
+    { q: 'Hasilnya beneran mirip referensi yang aku upload?', a: 'Iya, Visora tiru struktur, warna, dan komposisi desain sampai 90%, makin jelas referensinya makin akurat hasilnya.' },
+    { q: 'Aku nggak jago desain, bisa tetap pakai Visora?', a: 'Bisa banget, cukup upload foto produk kamu dan kasih referensi gaya yang kamu suka, sisanya Visora yang urus.' },
+    { q: 'Teks di desainnya bisa diatur sendiri?', a: 'Bisa, Visora generate teks yang rapi dan langsung bisa dipakai, kamu juga bisa sesuaikan sesuai kebutuhan.' },
+    { q: 'Visora cocok buat UMKM kecil-kecilan?', a: 'Justru Visora emang dirancang buat UMKM yang butuh konten visual cepat, rapi, dan konsisten tanpa ribet.' },
 ];
 
 /* ───────────── component ───────────── */
@@ -105,24 +104,24 @@ export const LandingPage: React.FC = () => {
             {/* ─── HERO ─── */}
             <section className="lp-hero-section">
                 <div className="lp-container">
-                    <h1 className="lp-hero-headline">Bikin Konten Promosi Berkelas dalam 5 Detik</h1>
-                    <p className="lp-hero-subheadline">Tanpa Skill Desain - Tanpa Sewa Desainer Mahal - Cukup Upload Foto &amp; Referensi, Biarkan AI Visora Mengubahnya Jadi Desain Profesional</p>
-                    <p className="lp-hero-highlight">Hasil 90% mirip referensi desain yang kamu mau!</p>
+                    <h1 className="lp-hero-headline">Upload Foto Produk Kamu, Desain Promosinya Jadi dalam 10 Detik</h1>
+                    <p className="lp-hero-subheadline">Kasih foto produk kamu, tambahin referensi gaya dari mana aja, Visora langsung generate desain promosi yang siap posting. Nggak perlu skill desain, nggak perlu desainer</p>
+                    <p className="lp-hero-highlight">Hasilnya 90% mirip referensi yang kamu mau, bukan tebak-tebakan</p>
                     <div style={{ marginTop: 16 }}><a href="/formorder" className="lp-btn lp-btn-lg lp-btn-dark">Cobain Visora Sekarang</a></div>
 
                     <div className="lp-hero-visual">
                         <div className="lp-visual-card">
-                            <div className="lp-visual-label">Foto Produk Biasa</div>
+                            <div className="lp-visual-label">Foto Produk Kamu</div>
                             <img src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_640/v1770727440/PRODUCT_ljkr9f.jpg" className="lp-visual-img" width="640" height="640" alt="" />
                         </div>
                         <div className="lp-visual-arrow">→</div>
                         <div className="lp-visual-card">
-                            <div className="lp-visual-label">Gaya Referensi</div>
+                            <div className="lp-visual-label">Referensi Gaya</div>
                             <img src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_640/v1770727440/REFERENSI_uds5oc.jpg" className="lp-visual-img" width="640" height="640" alt="" />
                         </div>
                         <div className="lp-visual-arrow">→</div>
                         <div className="lp-visual-card lp-main-result">
-                            <div className="lp-visual-label">Hasil Luar Biasa (AI)</div>
+                            <div className="lp-visual-label">Desain Jadi</div>
                             <img src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_720/v1770727441/HASIL_khdg7m.jpg" className="lp-visual-img" width="720" height="720" alt="" />
                         </div>
                     </div>
@@ -133,8 +132,8 @@ export const LandingPage: React.FC = () => {
             <section className="lp-problem-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Konten Promosi Terlihat 'Amatir' &amp; Kurang Menjual?</h2>
-                        <p>Cape-cape cari referensi di Pinterest, pas eksekusi di Canva hasilnya zonk.</p>
+                        <h2>Desain Promosimu Keliatan Asal-asalan dan Orang Langsung Skip</h2>
+                        <p>Kamu tau desain yang kamu mau, tapi hasilnya nggak pernah sesuai. Nunggu desainer lama, bayar mahal, ujungnya tetep kamu yang benerin sendiri</p>
                     </div>
                     <div className="lp-pain-grid">
                         {PAIN_POINTS.map((p, i) => (
@@ -148,8 +147,8 @@ export const LandingPage: React.FC = () => {
             <section className="lp-solution-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Satu Tools, Ribuan Gaya Visual Tanpa Batas</h2>
-                        <p>Visora bukan sekadar AI desain biasa, Kami menggabungkan tiga kekuatan utama untuk bisnis Anda:</p>
+                        <h2>Foto Produk Kamu Jadi Desain Promosi yang Sesuai Gaya Brand Kamu</h2>
+                        <p>Bukan AI desain yang generate asal-asalan. Visora pakai foto produk kamu sendiri, hasilnya bisa dikontrol</p>
                     </div>
                     <div className="lp-solution-grid">
                         {SOLUTIONS.map((s, i) => (
@@ -163,8 +162,8 @@ export const LandingPage: React.FC = () => {
             <section className="lp-usecases-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Dipakai untuk berbagai kebutuhan bisnis</h2>
-                        <p>Digunakan oleh bisnis owner yang butuh visual cepat, rapi, dan konsisten tanpa harus jago desain &amp; sewa vendor foto produk jutaan</p>
+                        <h2>Satu Tools untuk Semua Kebutuhan Visual Bisnis Kamu</h2>
+                        <p>Visual rapi tiap hari, tanpa desainer, tanpa vendor foto jutaan, tanpa ribet</p>
                     </div>
                     <div className="lp-usecases-wrap">
                         <div className="lp-usecases-grid">
@@ -184,8 +183,8 @@ export const LandingPage: React.FC = () => {
             <section className="lp-showcase-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Hasil desain yang bisa langsung dipakai jualan</h2>
-                        <p>Generated by Visora in seconds</p>
+                        <h2>Ini Semua Dibuat Visora</h2>
+                        <p>Dari foto produk biasa, dalam hitungan detik</p>
                     </div>
                 </div>
                 <div className="lp-marquee-wrapper">
@@ -203,7 +202,12 @@ export const LandingPage: React.FC = () => {
 
             {/* ─── TESTIMONIALS MARQUEE ─── */}
             <section className="lp-testimonials-section">
-                <div className="lp-container"><div className="lp-section-header"><h2>Apa kata yang udah nyobain??</h2></div></div>
+                <div className="lp-container">
+                    <div className="lp-section-header">
+                        <h2>100+ Bisnis dan UMKM Udah Coba</h2>
+                        <p>Ini yang mereka bilang</p>
+                    </div>
+                </div>
                 <div className="lp-saas-marquee">
                     <div className="lp-saas-marquee-content">
                         {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
@@ -220,19 +224,19 @@ export const LandingPage: React.FC = () => {
             <section className="lp-pricing-section" id="pricing-section">
                 <div className="lp-container">
                     <div className="lp-section-header">
-                        <h2>Satu Kali Bayar, Pilih Paket yang Cocok Buat Kamu!</h2>
-                        <p>Akses selamanya, tanpa biaya langganan bulanan!</p>
+                        <h2>Bayar Sekali, Akses Selamanya</h2>
+                        <p>Nggak ada biaya langganan, nggak ada kejutan tagihan</p>
                         <div className="lp-counter-bar" style={{ maxWidth: 400, margin: '20px auto 14px' }}>
                             <div className="lp-counter-fill" style={{ width: `${progress}%` }} />
                         </div>
-                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>🔥 {userCount} / 150 user pertama sudah pake Visora, Harga bakalan naik! Siapa cepat dia dapat!</p>
+                        <p style={{ color: '#FF3B30', fontWeight: 500 }}>🔥 {userCount} dari 150 slot harga awal udah terisi, setelah penuh harga naik permanen</p>
                     </div>
 
                     <div className="lp-pricing-grid">
                         {/* Basic Plan */}
                         <div className="lp-pricing-card">
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Basic</h3>
-                            <p style={{ color: 'var(--lp-text-secondary)', marginBottom: '24px' }}>Untuk pemula yang ingin visual cepat.</p>
+                            <p style={{ color: 'var(--lp-text-secondary)', marginBottom: '24px' }}>Cocok buat kamu yang baru mau mulai bikin konten sendiri</p>
                             <div style={{ marginBottom: 24 }}>
                                 <span className="lp-original-price">Rp 150.000</span>
                                 <div className="lp-promo-price">Rp 99.000</div>
@@ -245,14 +249,14 @@ export const LandingPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                            <a href="/formorder?plan=basic" className="lp-btn lp-btn-dark lp-btn-block">Pilih Basic</a>
+                            <a href="/formorder?plan=basic" className="lp-btn lp-btn-dark lp-btn-block">Mulai dengan Basic</a>
                         </div>
 
                         {/* Pro Plan */}
                         <div className="lp-pricing-card lp-pricing-pro">
                             <div className="lp-promo-badge" style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)' }}>Paling Laris</div>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#fff' }}>Pro</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Akses tanpa batas untuk bisnis & agency</p>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>Buat kamu yang posting tiap hari dan butuh hasil tanpa limit</p>
                             <div style={{ marginBottom: 24 }}>
                                 <span className="lp-original-price" style={{ color: 'rgba(255,255,255,0.5)' }}>Rp 250.000</span>
                                 <div className="lp-promo-price" style={{ color: '#fff' }}>Rp 145.000</div>
@@ -269,7 +273,7 @@ export const LandingPage: React.FC = () => {
                                     );
                                 })}
                             </div>
-                            <a href="/formorder?plan=pro" className="lp-btn lp-btn-block" style={{ background: '#fff', color: '#000' }}>Pilih Pro</a>
+                            <a href="/formorder?plan=pro" className="lp-btn lp-btn-block" style={{ background: '#fff', color: '#000' }}>Ambil Paket Pro</a>
                         </div>
                     </div>
                 </div>
@@ -278,7 +282,7 @@ export const LandingPage: React.FC = () => {
             {/* ─── FAQ ─── */}
             <section className="lp-faq-section">
                 <div className="lp-container" style={{ maxWidth: 860 }}>
-                    <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Pertanyaan yang sering ditanyakan</h2>
+                    <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Masih Ada yang Mau Ditanyain?</h2>
                     <div>
                         {FAQS.map((f, i) => (
                             <div key={i} className="lp-accordion-item">
@@ -301,9 +305,10 @@ export const LandingPage: React.FC = () => {
             {/* ─── CHAT ADMIN ─── */}
             <section className="lp-chat-section">
                 <div className="lp-container" style={{ textAlign: 'center' }}>
-                    <h2>Mau tau lebih detail tentang Visora??</h2>
-                    <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
-                        <a href="https://wa.me/6283193890414?text=Halo%20min%20saya%20tertarik%20sama%20Visora%2C%20mau%20nanya%20dulu%20nih" className="lp-wa-btn" rel="noopener" target="_blank">Chat Admin</a>
+                    <h2>Ada yang Masih Mau Ditanyain Sebelum Mulai?</h2>
+                    <p style={{ color: 'var(--lp-text-secondary)', marginTop: 8, marginBottom: 20, fontSize: '1.0625rem' }}>Tim Visora siap bantu kamu pilih paket yang paling pas</p>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <a href="https://wa.me/6283193890414?text=Halo%20min%20saya%20tertarik%20sama%20Visora%2C%20mau%20nanya%20dulu%20nih" className="lp-wa-btn" rel="noopener" target="_blank">Chat Langsung Sekarang</a>
                     </div>
                 </div>
             </section>
@@ -311,9 +316,9 @@ export const LandingPage: React.FC = () => {
             {/* ─── FINAL PUSH ─── */}
             <section className="lp-final-section">
                 <div className="lp-container" style={{ textAlign: 'center' }}>
-                    <h2>Berhenti Membuang Waktu untuk Desain yang Tidak Menghasilkan Penjualan</h2>
-                    <p className="lp-final-sub">Amankan akses selamanya sekarang! Mulai ciptakan konten promosi yang membuat orang berhenti scrolling!</p>
-                    <a href="/formorder" className="lp-btn lp-btn-xl lp-btn-dark">Beli Visora Sekarang!</a>
+                    <h2>Produk Kamu Bagus, Sekarang Biarkan Visualnya Sesuai</h2>
+                    <p className="lp-final-sub">Upload foto produk, kasih referensi gaya, desain langsung jadi. 100+ bisnis udah buktiin sendiri, sekarang giliran kamu</p>
+                    <a href="/formorder" className="lp-btn lp-btn-xl lp-btn-dark">Cobain Visora Sekarang</a>
                 </div>
             </section>
 
