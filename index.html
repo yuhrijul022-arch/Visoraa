@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- Disable zoom for app-like experience -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Visora</title>
+  <meta name="description"
+    content="Visora — AI-powered design intelligence for product marketing. Upload your product, get professional marketing visuals in seconds." />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme color (status bar on mobile) -->
+  <meta name="theme-color" content="#000000" />
+
+  <!-- iOS PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Visora" />
+  <link rel="apple-touch-icon" href="/icons/icon-dark.svg" />
+
+  <!-- Prevent phone number detection -->
+  <meta name="format-detection" content="telephone=no" />
+
+  <!-- Adaptive Favicon (switches black/white based on OS theme) -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-adaptive.svg" />
+
+  <link rel="stylesheet" href="/index.css">
+  <style>
+    /* Global app-like styles */
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      color: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* Disable horizontal overscroll bounce, but allow vertical for pull-to-refresh */
+      overscroll-behavior-x: none;
+      overscroll-behavior-y: auto;
+      /* Disable text selection for app feel */
+      -webkit-user-select: none;
+      user-select: none;
+      /* Disable tap highlight */
+      -webkit-tap-highlight-color: transparent;
+      /* Disable callout on long press */
+      -webkit-touch-callout: none;
+    }
+
+    /* Allow text selection on inputs and textareas */
+    input,
+    textarea,
+    [contenteditable] {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Hide ALL scrollbars globally */
+    *::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    * {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    /* Safe area padding for notched devices */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  </style>
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '988932959615649');
+  </script>
+  <!-- End Meta Pixel Code -->
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+
+  <!-- Register Service Worker for PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => { });
+      });
+    }
+    // Prevent pinch zoom on the whole page
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('gestureend', (e) => e.preventDefault());
+    // Prevent double-tap zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, false);
+  </script>
+</body>
+
+</html>

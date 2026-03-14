@@ -1,0 +1,33 @@
+{
+    "framework": "vite",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/$1"
+        },
+        {
+            "source": "/",
+            "destination": "/landing-page.html"
+        },
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/index.html"
+        }
+    ],
+    "functions": {
+        "api/**/*.ts": {
+            "maxDuration": 300
+        }
+    },
+    "regions": [
+        "sin1"
+    ],
+    "crons": [
+        {
+            "path": "/api/cron-reset-infinite",
+            "schedule": "0 17 * * *"
+        }
+    ]
+}
