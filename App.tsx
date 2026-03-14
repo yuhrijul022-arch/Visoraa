@@ -359,7 +359,7 @@ export default function App({ user }: AppProps) {
             onAnalyze={handleAnalyze}
             onGenerate={handleGenerate}
             isLocked={isLocked}
-            isInfiniteEnabled={dbUser?.plan === 'pro' && dbUser?.infiniteEnabled}
+            isInfiniteEnabled={dbUser?.plan === 'pro' || dbUser?.infiniteEnabled}
             onOpenSettings={() => setShowSettings(true)}
           />
         </Suspense>

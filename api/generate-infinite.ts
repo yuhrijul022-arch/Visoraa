@@ -55,9 +55,9 @@ async function handleGenerate(req: VercelRequest, res: VercelResponse, uid: stri
     try {
         if (!supabase) throw new Error('Supabase uninitialized');
         
-        // Verify Pro Plan
+        // Verify Pro Plan or Infinite Enabled
         const { data: dbUser } = await supabase.from('users').select('plan, infiniteEnabled').eq('id', uid).single();
-        if (!dbUser || dbUser.plan !== 'pro' || !dbUser.infiniteEnabled) {
+        if (!dbUser || (dbUser.plan !== 'pro' && !dbUser.infiniteEnabled)) {
             return res.status(403).json({ error: 'Infinite Mode is only available for Pro users.' });
         }
 
