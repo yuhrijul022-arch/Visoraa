@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { eventName, eventId, email, value, currency, sourceUrl, userAgent, fbp, fbc, externalId } = req.body;
+        const { eventName, eventId, email, value, currency, sourceUrl, userAgent, fbp, fbc, externalId, testEventCode } = req.body;
 
         if (!eventName) {
             return res.status(400).json({ error: 'eventName is required' });
@@ -59,9 +59,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             };
         }
 
-        const payload = {
+        const payload: Record<string, any> = {
             data: [eventData],
         };
+
+        // Forward test_event_code so test events appear in Events Manager
+        if (testEventCode) {
+            payload.test_event_code = testEventCode;
+        }
 
         const capiUrl = `https://graph.facebook.com/v18.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_TOKEN}`;
 

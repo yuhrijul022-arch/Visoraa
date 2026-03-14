@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { EntitlementResolver } from '../lib/entitlements.js';
 
 /**
  * AuthResolver — neutral landing page after Google OAuth.
@@ -26,12 +27,18 @@ export const AuthResolver: React.FC = () => {
                 // 1. Check plan status
                 const { data: userData } = await supabase
                     .from('users')
-                    .select('plan')
+                    .select('plan, status')
                     .eq('id', session.user.id)
                     .single();
 
-                if (userData?.plan && userData.plan !== 'none') {
-                    // Active plan → dashboard
+                const resolver = new EntitlementResolver({
+                    plan: userData?.plan || 'free',
+                    infinite_enabled: false,
+                    status: userData?.status || 'active',
+                });
+
+                if (resolver.canAccessDashboard) {
+                    // Active paid plan + active status → dashboard
                     window.location.href = '/dashboard';
                     return;
                 }

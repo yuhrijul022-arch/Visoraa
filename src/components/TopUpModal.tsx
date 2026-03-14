@@ -73,7 +73,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose, onSucce
                 return;
             }
 
-            const resp = await fetch('/api/topup', {
+            const resp = await fetch('/api/payment?action=topup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

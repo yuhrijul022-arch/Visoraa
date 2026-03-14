@@ -4,6 +4,7 @@ import { eq, ilike, or } from 'drizzle-orm';
 import { db } from './_lib/db.js';
 import { users, payments, paymentGatewayConfig, apiKeys, creditsTransactions, infiniteUsage, adminLogs } from '../src/db/schema/index.js';
 import { encrypt } from './_lib/payment/crypto.js';
+import { canHardDeleteUser } from './_lib/admin/adminService.js';
 
 // Setup Supabase
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
@@ -38,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         switch (action) {
             case 'stats':       return await handleStats(req, res);
             case 'users':       return await handleUsers(req, res);
-            case 'users-action': return await handleUsersAction(req, res);
+            case 'users-action': return await handleUsersAction(req, res, dbUser.id);
             case 'gateways':    return await handleGateways(req, res);
             case 'apikeys':     return await handleApiKeys(req, res);
             case 'reset_admins': 
@@ -86,15 +87,13 @@ async function handleUsers(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ users: usersList });
 }
 
-async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
+async function handleUsersAction(req: VercelRequest, res: VercelResponse, adminUserId: string) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     
     const { userId, action, value } = req.body;
-    if (!userId || !action) return res.status(400).json({ error: 'Missing parameters' });
+    if (!action) return res.status(400).json({ error: 'Missing parameters' });
 
-    const targetUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
-    if (!targetUser) return res.status(404).json({ error: 'User not found' });
-
+    // Handle create_user BEFORE targetUser lookup (userId may be empty or 'new')
     if (action === 'create_user') {
         const { email, password, name, plan = 'basic', credits = 0 } = value;
         if (!email || !password || !name) return res.status(400).json({ error: 'Missing user fields' });
@@ -120,8 +119,15 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
         });
         
         return res.status(200).json({ success: true, user: authData.user });
+    }
 
-    } else if (action === 'update_user') {
+    // All other actions require a valid userId
+    if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+    const targetUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    if (action === 'update_user') {
         const { name, email, plan, credits } = value;
         
         // 1. Update Supabase Auth if email/name changed
@@ -159,11 +165,39 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
             plan: newPlan,
             infiniteEnabled: newPlan === 'pro'
         }).where(eq(users.id, userId));
-    } else if (action === 'delete') {
+    } else if (action === 'toggle_infinite') {
+        const newVal = !targetUser.infiniteEnabled;
+        await db.update(users).set({ infiniteEnabled: newVal }).where(eq(users.id, userId));
+    } else if (action === 'soft_delete') {
+        // Soft Delete
+        await db.update(users).set({
+            status: 'deleted',
+            deletedAt: new Date()
+        }).where(eq(users.id, userId));
+
+        await db.insert(adminLogs).values({
+            adminId: adminUserId,
+            targetUserId: userId,
+            action: 'SOFT_DELETE_USER',
+            meta: { reason: value?.reason || 'Admin soft deleted user' }
+        });
+    } else if (action === 'hard_delete' || action === 'force_hard_delete') {
+        // Hard Delete Check Eligibility
+        const eligibility = await canHardDeleteUser(userId);
+        
+        if (!eligibility.canDelete && action !== 'force_hard_delete') {
+            return res.status(400).json({ 
+                error: 'User has financial records. Please use force_hard_delete to bypass.', 
+                details: eligibility 
+            });
+        }
+
         // Cascade delete dependent records due to active foreign key constraints
         await db.delete(creditsTransactions).where(eq(creditsTransactions.userId, userId));
         await db.delete(infiniteUsage).where(eq(infiniteUsage.userId, userId));
         await db.delete(payments).where(eq(payments.userId, userId));
+        
+        // Remove admin logs where they are the target
         await db.delete(adminLogs).where(or(eq(adminLogs.adminId, userId), eq(adminLogs.targetUserId, userId)));
         
         // Also delete from Supabase-only tables to satisfy foreign-key constraints
@@ -175,11 +209,19 @@ async function handleUsersAction(req: VercelRequest, res: VercelResponse) {
 
         // Delete from Drizzle
         await db.delete(users).where(eq(users.id, userId));
+
         // Delete from Supabase Auth
         if (supabase) {
             const { error: delErr } = await supabase.auth.admin.deleteUser(userId);
             if (delErr) console.error("Supabase delete user error:", delErr);
         }
+
+        await db.insert(adminLogs).values({
+            adminId: adminUserId,
+            action: action === 'force_hard_delete' ? 'FORCE_HARD_DELETE_USER' : 'HARD_DELETE_USER',
+            meta: { deletedUserId: userId, reason: value?.reason || 'Admin hard deleted user' }
+        });
+        
     } else {
         return res.status(400).json({ error: 'Unknown action' });
     }

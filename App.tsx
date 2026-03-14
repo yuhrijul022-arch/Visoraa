@@ -4,6 +4,7 @@ import { useCredits } from './src/lib/credits';
 import { supabase } from './src/lib/supabaseClient';
 import { useToast } from './src/components/ui/ToastProvider';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { EntitlementResolver } from './src/lib/entitlements';
 
 const BottomControlBar = lazy(() => import('./components/BottomControlBar'));
 const ResultDisplay = lazy(() => import('./components/ResultDisplay'));
@@ -322,7 +323,7 @@ export default function App({ user }: AppProps) {
                 </button>
                 <button
                   onClick={handleGenerate}
-                  className="flex-[2] py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="flex-[2] py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   Generate Images
                 </button>
@@ -359,7 +360,13 @@ export default function App({ user }: AppProps) {
             onAnalyze={handleAnalyze}
             onGenerate={handleGenerate}
             isLocked={isLocked}
-            isInfiniteEnabled={dbUser?.plan === 'pro' || dbUser?.infiniteEnabled}
+            isInfiniteEnabled={
+              dbUser ? new EntitlementResolver({
+                plan: dbUser.plan || 'free',
+                infinite_enabled: dbUser.infiniteEnabled || false,
+                status: dbUser.status || 'active'
+              }).canUseInfinite : false
+            }
             onOpenSettings={() => setShowSettings(true)}
           />
         </Suspense>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { initPixel, trackPageView, trackViewContent } from '../lib/metaPixel.js';
+import { trackPageView, trackViewContent } from '../lib/metaPixel.js';
 import {
     getUserCount, incrementUserCount,
     getNotifIndex, setNotifIndex, setLastNotifTime,
@@ -65,7 +65,7 @@ export const LPForm: React.FC = () => {
     const faqRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     /* ─ Meta Pixel ─ */
-    useEffect(() => { initPixel(); trackPageView(); trackViewContent(); }, []);
+    useEffect(() => { trackPageView(); trackViewContent(); }, []);
 
     /* ─ Shared fake notifications (same engine as /formorder) ─ */
     useEffect(() => {

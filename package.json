@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.9.4",
     "@fal-ai/serverless-client": "^0.15.0",
     "@supabase/supabase-js": "^2.99.1",
     "drizzle-orm": "^0.45.1",

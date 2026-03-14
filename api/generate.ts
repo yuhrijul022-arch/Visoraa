@@ -5,6 +5,7 @@ import { db } from './_lib/db.js';
 import { users } from '../src/db/schema/index.js';
 import { calculateCost } from './_lib/credits/costCalculator.js';
 import { PlanType } from './_lib/payment/types.js';
+import { EntitlementResolver } from '../src/lib/entitlements.js';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -156,6 +157,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Fetch user plan and credits using Drizzle
         const dbUser = await db.query.users.findFirst({ where: eq(users.id, uid) });
         if (!dbUser) return res.status(404).json({ error: 'User not found.' });
+
+        const rights = new EntitlementResolver({
+            plan: (dbUser.plan as any) || 'free',
+            infinite_enabled: dbUser.infiniteEnabled || false,
+            status: ((dbUser as any).status as any) || 'active'
+        });
+
+        if (rights.user.status !== 'active') {
+            return res.status(403).json({ error: 'Account is not active.' });
+        }
 
         // Calculate credit cost
         const combinedUserInput = `${req.body.customPrompt || ''} ${req.body.headline || ''} ${req.body.benefit || ''}`;

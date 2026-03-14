@@ -44,7 +44,7 @@ export const BillingPage: React.FC = () => {
         if (!user?.id) return;
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
-                fetch('/api/user-payments', {
+                fetch('/api/payment', {
                     headers: { 'Authorization': `Bearer ${session.access_token}` }
                 })
                 .then(res => res.json())
@@ -90,7 +90,7 @@ export const BillingPage: React.FC = () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
 
-            const res = await fetch('/api/create-transaction', {
+            const res = await fetch('/api/payment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

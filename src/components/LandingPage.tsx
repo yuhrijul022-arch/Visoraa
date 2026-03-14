@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { initPixel, trackPageView, trackViewContent } from '../lib/metaPixel.js';
+import { trackPageView, trackViewContent } from '../lib/metaPixel.js';
 import {
     getUserCount, incrementUserCount,
     getNotifIndex, setNotifIndex, setLastNotifTime,
@@ -65,7 +65,7 @@ export const LandingPage: React.FC = () => {
     const faqRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     /* ─ Meta Pixel ─ */
-    useEffect(() => { initPixel(); trackPageView(); trackViewContent(); }, []);
+    useEffect(() => { trackPageView(); trackViewContent(); }, []);
 
     /* ─ Shared fake notifications (same engine as /formorder) ─ */
     useEffect(() => {
@@ -92,7 +92,6 @@ export const LandingPage: React.FC = () => {
 
     return (
         <>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
             <style>{CSS}</style>
 
             {/* ─── NAV ─── */}
@@ -102,7 +101,7 @@ export const LandingPage: React.FC = () => {
                         <img src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_320/v1770727440/LOGO_VISORA_BLACK_fidzhe.png" alt="Visora" className="lp-logo-img" width="232" height="58" />
                     </a>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <a href="/dashboard" className="lp-btn lp-btn-sm" style={{ background: 'transparent', color: 'var(--lp-text-primary)', border: '1px solid rgba(0,0,0,0.12)' }}>Login</a>
+                        <a href="/auth/resolve" className="lp-btn lp-btn-sm" style={{ background: 'transparent', color: 'var(--lp-text-primary)', border: '1px solid rgba(0,0,0,0.12)' }}>Login</a>
                         <a href="#pricing-section" className="lp-btn lp-btn-sm lp-btn-dark">Cobain Visora</a>
                     </div>
                 </div>
@@ -374,7 +373,7 @@ const CSS = `
     --lp-accent-dark: #000000;
     --lp-radius: 20px;
     --lp-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    --lp-font: 'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --lp-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --lp-transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
     --lp-max: 1080px;
     --lp-py: 88px;

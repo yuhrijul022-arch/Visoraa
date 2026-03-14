@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ui/ToastProvider.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { formatRupiah } from '../utils/currency.js';
-import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, initPixel, FB_TEST_EVENT_CODE } from '../lib/metaPixel.js';
+import { generateEventId, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, sendCapiEvent } from '../lib/metaPixel.js';
 
 export const FormOrderAuth: React.FC = () => {
     const { toast } = useToast();
@@ -23,7 +23,6 @@ export const FormOrderAuth: React.FC = () => {
     });
 
     useEffect(() => {
-        initPixel();
         trackPageView();
         trackInitiateCheckout();
     }, []);
@@ -59,7 +58,7 @@ export const FormOrderAuth: React.FC = () => {
 
             if (userData?.plan && userData.plan !== 'none') {
                 // Active plan → dashboard
-                window.location.href = '/dashboard';
+                window.location.href = '/auth/resolve';
                 return;
             }
 
@@ -97,24 +96,8 @@ export const FormOrderAuth: React.FC = () => {
         return () => { try { document.head.removeChild(script); } catch { } };
     }, []);
 
-    const triggerCapiFallback = async (eventName: string, eventId: string, value: number) => {
-        try {
-            const { fbp, fbc } = getFbpFbc();
-            await fetch('/api/meta-capi', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    eventName,
-                    eventId,
-                    email,
-                    value,
-                    sourceUrl: window.location.href,
-                    userAgent: navigator.userAgent,
-                    fbp, fbc,
-                    testEventCode: FB_TEST_EVENT_CODE
-                }),
-            });
-        } catch { /* non-blocking */ }
+    const triggerCapiFallback = (eventName: string, eventId: string, value: number) => {
+        sendCapiEvent({ eventName, eventId, email, value });
     };
 
     const handleSubmit = async () => {
@@ -130,7 +113,7 @@ export const FormOrderAuth: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const resp = await fetch('/api/create-transaction', {
+            const resp = await fetch('/api/payment', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

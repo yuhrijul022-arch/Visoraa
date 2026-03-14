@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient.js';
-import { Search, Edit2, Shield, Trash2, Check, X, CreditCard, UserPlus, Save } from 'lucide-react';
+import { Search, Edit2, Shield, Trash2, Check, X, CreditCard, UserPlus, Save, ToggleLeft, ToggleRight, Zap, Plus } from 'lucide-react';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -160,12 +160,22 @@ export const AdminUsers: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-mono">{user.credits}</td>
-                                        <td className="px-6 py-4">{user.infiniteEnabled ? <Check size={16} className="text-emerald-500" /> : <X size={16} className="text-red-500" />}</td>
-                                        <td className="px-6 py-4 text-right space-x-2">
+                                        <td className="px-6 py-4">
+                                            <button onClick={() => handleAction(user.id, 'toggle_infinite', null)} className={`p-1 rounded-lg transition-colors ${user.infiniteEnabled ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-red-500 hover:bg-red-500/10'}`} title="Toggle Infinite">
+                                                {user.infiniteEnabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4 text-right space-x-1">
+                                            <button onClick={() => { const c = prompt('Jumlah credits:'); if (c) handleAction(user.id, 'add_credits', c); }} className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-400 hover:text-purple-300 transition-colors" title="Add Credits">
+                                                <Plus size={16} />
+                                            </button>
+                                            <button onClick={() => handleAction(user.id, 'toggle_plan', user.plan === 'pro' ? 'basic' : 'pro')} className="p-2 hover:bg-amber-500/10 rounded-lg text-amber-400 hover:text-amber-300 transition-colors" title="Toggle Plan">
+                                                <Zap size={16} />
+                                            </button>
                                             <button onClick={() => openEditModal(user)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Edit User">
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button onClick={() => handleAction(user.id, 'delete', null)} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors" title="Hapus User">
+                                            <button onClick={() => handleAction(user.id, 'soft_delete', null)} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors" title="Soft Delete">
                                                 <Trash2 size={16} />
                                             </button>
                                         </td>

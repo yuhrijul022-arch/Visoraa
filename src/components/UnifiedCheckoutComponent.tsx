@@ -9,7 +9,7 @@ import {
     NOTIF_NAMES, NOTIF_CITIES, NOTIF_TIMING,
     TESTIMONIALS, SHOWCASE_IMAGES, BENEFITS,
 } from '../lib/funnelState';
-import { initPixel, trackPageView, trackInitiateCheckout, trackAddPaymentInfo, generateEventId, getFbpFbc } from '../lib/metaPixel.js';
+import { trackPageView, trackInitiateCheckout, trackAddPaymentInfo, generateEventId, sendCapiEvent } from '../lib/metaPixel.js';
 
 declare global {
     interface Window { snap?: any; }
@@ -56,9 +56,8 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         { label: 'Guide Meta Ads Blueprint', value: 'Rp 199.000' },
     ];
 
-    // ── Meta Pixel ── fire on load
+    // ── Meta Pixel ── fire on load (deduplicated + fbq-ready internally)
     useEffect(() => {
-        initPixel();
         trackPageView();
         trackInitiateCheckout();
     }, []);
@@ -128,7 +127,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
         }
         setIsLoading(true);
         try {
-            const resp = await fetch('/api/create-transaction', {
+            const resp = await fetch('/api/payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, username: name, password, promoCode: promoCode || undefined, planType: plan }),
@@ -148,24 +147,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
             const paymentEventId = generateEventId();
             const planValue = plan === 'pro' ? 145000 : 99000;
             trackAddPaymentInfo(paymentEventId, planValue);
-
-            // Send CAPI AddPaymentInfo
-            try {
-                const { fbp, fbc } = getFbpFbc();
-                await fetch('/api/meta-capi', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        eventName: 'AddPaymentInfo',
-                        eventId: paymentEventId,
-                        email,
-                        value: planValue,
-                        sourceUrl: window.location.href,
-                        userAgent: navigator.userAgent,
-                        fbp, fbc,
-                    }),
-                });
-            } catch { /* non-blocking */ }
+            sendCapiEvent({ eventName: 'AddPaymentInfo', eventId: paymentEventId, email, value: planValue });
 
             const { snapToken, gateway, redirectUrl, orderId } = result.data;
             

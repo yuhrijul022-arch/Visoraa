@@ -15,22 +15,17 @@ const AdminGate: React.FC = () => {
                 return;
             }
 
-            // Query langsung ke tabel users via Supabase — tidak butuh API endpoint
-            const { data, error } = await supabase
-                .from('users')
-                .select('is_admin')
-                .eq('id', session.user.id)
-                .single();
-
-            console.log('=== ADMIN DEBUG ===');
-            console.log('User ID:', session.user.id);
-            console.log('User Email:', session.user.email);
-            console.log('Data dari DB:', JSON.stringify(data));
-            console.log('Error dari DB:', JSON.stringify(error));
-            console.log('isAdmin result:', !error && data?.is_admin === true);
-            console.log('==================');
-
-            setIsAdmin(!error && data?.is_admin === true);
+            try {
+                // Use the admin API check endpoint (Drizzle — bypasses RLS)
+                const res = await fetch('/api/admin?action=check', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                const data = await res.json();
+                setIsAdmin(res.ok && data.isAdmin === true);
+            } catch (err) {
+                console.error('Admin check failed:', err);
+                setIsAdmin(false);
+            }
             setLoading(false);
         };
 

@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import * as fal from '@fal-ai/serverless-client';
+import { fal } from '@fal-ai/client';
 import { checkAndIncrementInfiniteUsage, getInfiniteStatus } from './_lib/infinite/rateLimit.js';
+import { recordZeroCostGeneration } from './_lib/infinite/usageLogger.js';
+import { EntitlementResolver } from '../src/lib/entitlements.js';
 
 fal.config({
     credentials: process.env.FAL_KEY || process.env.VITE_FAL_KEY
@@ -55,13 +57,23 @@ async function handleGenerate(req: VercelRequest, res: VercelResponse, uid: stri
     try {
         if (!supabase) throw new Error('Supabase uninitialized');
         
-        // Verify Pro Plan or Infinite Enabled
-        const { data: dbUser } = await supabase.from('users').select('plan, infiniteEnabled').eq('id', uid).single();
-        if (!dbUser || (dbUser.plan !== 'pro' && !dbUser.infiniteEnabled)) {
+        // Verify Entitlement
+        const { data: dbUser } = await supabase.from('users').select('*').eq('id', uid).single();
+        if (!dbUser) {
+            return res.status(403).json({ error: 'User not found.' });
+        }
+        
+        const rights = new EntitlementResolver({
+            plan: dbUser.plan || 'free',
+            infinite_enabled: dbUser.infiniteEnabled || false,
+            status: dbUser.status || 'active'
+        });
+
+        if (!rights.canUseInfinite) {
             return res.status(403).json({ error: 'Infinite Mode is only available for Pro users.' });
         }
 
-        const { productImage, promptText, referenceImage } = req.body;
+        const { productImage, promptText, textMode } = req.body;
         if (!productImage || !promptText) return res.status(400).json({ error: 'Product image and prompt are required.' });
 
         // Check & Increment limits
@@ -77,23 +89,30 @@ async function handleGenerate(req: VercelRequest, res: VercelResponse, uid: stri
             throw e;
         }
 
-        // Generate with Fal.ai Flux Schnell (No credit cost)
+        // Generate with Fal.ai Flux Schnell
+        const baseStrength = textMode === 'on' ? 0.30 : 0.55; 
+        const optimizedPrompt = `Professional product photography. Preserve exact product shape, label placement, packaging geometry, and brand marks. Only change environment, lighting, and scene styling. ${promptText}. 8k, highly detailed.`;
+
         const result: any = await fal.subscribe("fal-ai/flux-schnell", {
             input: {
-                prompt: promptText,
+                prompt: optimizedPrompt,
                 image_size: "landscape_4_3",
                 num_inference_steps: 4,
                 num_images: 1,
-                image_url: productImage
+                image_url: productImage,
+                strength: baseStrength
             },
             logs: true,
         });
 
         const outputs = [];
-        if (result && result.images && result.images.length > 0) {
+        // The new @fal-ai/client returns result.data.images when successful, but let's handle safely:
+        const imagesResult = result.data ? result.data.images : result.images;
+        
+        if (imagesResult && imagesResult.length > 0) {
             outputs.push({
-                downloadUrl: result.images[0].url,
-                mimeType: result.images[0].content_type || 'image/jpeg',
+                downloadUrl: imagesResult[0].url,
+                mimeType: imagesResult[0].content_type || 'image/jpeg',
                 storagePath: null 
             });
         } else {
@@ -102,16 +121,10 @@ async function handleGenerate(req: VercelRequest, res: VercelResponse, uid: stri
 
         // Log generation successfully
         try {
-            await supabase.from('generation_logs').insert({
-                user_id: uid,
-                prompt: promptText.substring(0, 500),
-                model: 'fal-ai/flux-schnell',
-                status: 'success',
-                credits_used: 0,
-                refunded: false,
-                image_urls: outputs.map(o => o.downloadUrl),
-            } as never);
-        } catch { }
+            await recordZeroCostGeneration(uid, 1200, promptText.substring(0, 500), outputs.map(o => o.downloadUrl));
+        } catch (err: any) { 
+            console.error('Failed to log zero cost generation:', err);
+        }
 
         return res.status(200).json({
             status: "SUCCEEDED",
