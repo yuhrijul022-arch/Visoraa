@@ -35,19 +35,17 @@ export const UnifiedCheckoutComponent: React.FC = () => {
     
     const PLAN_BENEFITS = {
         basic: [
-            "Generate desain statis & dinamis",
-            "Akses ke seluruh template dasar",
-            "Resolusi standar (1080p)",
-            "Akses selamanya (lifetime)",
+            'Generate desain konten promosi dan foto produk',
+            'Akses semua template dasar yang udah dikurasi',
+            'Resolusi 1080p siap upload ke semua platform',
+            'Bayar sekali, akses selamanya, ga ada biaya tambahan',
         ],
         pro: [
-            "Semua fitur Basic",
-            "Akses fitur Infinite Mode",
-            "Generate gambar tanpa limit harian (30/hari)",
-            "Resolusi tinggi (4K & Ultra HD)",
-            "Prioritas antrean server (jalur cepat)",
-            "Akses eksklusif template Pro",
-            "Akses selamanya (lifetime)",
+            { text: 'Infinite Mode — generate desain tanpa batas sama sekali', bold: true },
+            'Resolusi 4K dan Ultra HD buat hasil paling tajam',
+            'Jalur server prioritas, ga perlu antri lama',
+            'Akses style desain eksklusif yang ga ada di Basic',
+            'Bayar sekali, akses selamanya, ga ada biaya tambahan',
         ],
     };
 
@@ -253,12 +251,17 @@ export const UnifiedCheckoutComponent: React.FC = () => {
 
                 {/* ── SECTION C: CHECKLIST BENEFITS ── */}
                 <div style={{ marginBottom: 28 }}>
-                    {PLAN_BENEFITS[plan].map((b, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12, fontSize: '1rem' }}>
-                            <span style={{ color: plan === 'pro' ? '#34C759' : '#34C759', fontWeight: 900, lineHeight: 1.2 }}>✓</span>
-                            <span style={{ color: '#1d1d1f', fontWeight: 500 }}>{b}</span>
-                        </div>
-                    ))}
+                    {PLAN_BENEFITS[plan].map((b, i) => {
+                        const isObj = typeof b === 'object';
+                        const text = isObj ? b.text : b;
+                        const isBold = isObj && b.bold;
+                        return (
+                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12, fontSize: '1rem' }}>
+                                <span style={{ color: plan === 'pro' ? '#34C759' : '#34C759', fontWeight: 900, lineHeight: 1.2 }}>✓</span>
+                                <span style={{ color: '#1d1d1f', fontWeight: isBold ? 700 : 500 }}>{text as string}</span>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* ── SECTION D + E + F: ORDER FORM CARD ── */}
@@ -310,7 +313,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                                     </div>
                                     <span style={{ fontWeight: 700, color: '#111' }}>Rp99rb</span>
                                 </div>
-                                <span style={{ fontSize: '0.8rem', color: '#444', paddingLeft: 26 }}>1000+ Template & Standard Resolution</span>
+                                <span style={{ fontSize: '0.8rem', color: '#444', paddingLeft: 26 }}>Akses semua template dasar<br/>Resolusi 1080p & Desain Promosi</span>
                             </div>
 
                             {/* Pro */}
@@ -327,7 +330,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                                     </div>
                                     <span style={{ fontWeight: 700, color: '#fff' }}>Rp145rb</span>
                                 </div>
-                                <span style={{ fontSize: '0.8rem', color: '#ccc', paddingLeft: 26 }}>Infinite Generate & 4K Resolution</span>
+                                <span style={{ fontSize: '0.8rem', color: '#ccc', paddingLeft: 26 }}>Infinite Generate & 4K Ultra HD<br/>Akses style eksklusif & Priority Server</span>
                             </div>
                         </div>
                     </div>
