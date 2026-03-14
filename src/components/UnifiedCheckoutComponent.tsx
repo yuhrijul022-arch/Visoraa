@@ -422,7 +422,7 @@ export const UnifiedCheckoutComponent: React.FC = () => {
                     />
                     <div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{notifData.name} - {notifData.city}</div>
-                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp99.000</div>
+                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp145.000</div>
                     </div>
                 </div>
             )}

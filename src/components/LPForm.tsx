@@ -324,7 +324,7 @@ export const LPForm: React.FC = () => {
                     <img className="lp-notif-img" src="https://res.cloudinary.com/dodk1vq7t/image/upload/f_auto,q_auto,w_120/v1771281459/visora-variant-2-1770749485907_nbnneu.jpg" width="44" height="44" alt="" />
                     <div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{notifData.name} - {notifData.city}</div>
-                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp99.000</div>
+                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Baru saja membeli Visora Rp145.000</div>
                     </div>
                 </div>
             )}

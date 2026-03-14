@@ -4,7 +4,6 @@
  */
 
 const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '988932959615649';
-// Global test code for CAPI sending to Meta Event Manager
 export const FB_TEST_EVENT_CODE = 'TEST31173';
 
 declare global {
@@ -12,6 +11,22 @@ declare global {
         fbq?: any;
         _fbq?: any;
     }
+}
+
+// Debounce map specifically to handle React > 18 StrictMode double-invocations
+// Allows the same event on the same path after 500ms
+const lastFiredMap = new Map<string, number>();
+
+function canFire(eventName: string): boolean {
+    const path = typeof window !== 'undefined' ? window.location.pathname : '';
+    const key = `${path}::${eventName}`;
+    const now = Date.now();
+    const last = lastFiredMap.get(key) || 0;
+    
+    if (now - last < 500) return false;
+    
+    lastFiredMap.set(key, now);
+    return true;
 }
 
 export function generateEventId(): string {
@@ -28,22 +43,26 @@ export function initPixel(): void {
 
 export function trackPageView(): void {
     if (typeof window === 'undefined' || !window.fbq) return;
+    if (!canFire('PageView')) return;
     // Fire pageview safely. Let Facebook handle session deduplication.
     window.fbq('track', 'PageView', {}, { eventID: generateEventId() });
 }
 
 export function trackViewContent(data?: Record<string, any>): void {
     if (typeof window === 'undefined' || !window.fbq) return;
+    if (!canFire('ViewContent')) return;
     window.fbq('track', 'ViewContent', data || {}, { eventID: generateEventId() });
 }
 
 export function trackInitiateCheckout(eventId?: string): void {
     if (typeof window === 'undefined' || !window.fbq) return;
+    if (!canFire('InitiateCheckout')) return;
     window.fbq('track', 'InitiateCheckout', {}, { eventID: eventId || generateEventId() });
 }
 
 export function trackAddPaymentInfo(eventId?: string, value?: number): void {
     if (typeof window === 'undefined' || !window.fbq) return;
+    if (!canFire('AddPaymentInfo')) return;
     window.fbq('track', 'AddPaymentInfo', {
         currency: 'IDR',
         value: value || 99000,
