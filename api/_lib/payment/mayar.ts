@@ -23,7 +23,12 @@ export class MayarProvider implements PaymentProvider {
   }
 
   async createTransaction(params: CreateTransactionParams): Promise<PaymentProviderResult> {
-    const url = `${this.baseUrl}/payment/create`;
+    let url = this.baseUrl;
+    if (!url.endsWith('/payment/create')) {
+      if (url.endsWith('/')) url = url.slice(0, -1);
+      url = `${url}/payment/create`;
+    }
+
     const nameStr = params.name || "Visora User";
     const siteUrl = process.env.VITE_SITE_URL || "https://visoraa.vercel.app";
 
