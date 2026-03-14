@@ -152,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const modelConfig = MODELS[mode || 'standard'] || MODELS.standard;
         const numImages = Math.min(Math.max(Number(req.body.qty) || 1, 1), 4);
-        
+
         // Fetch user plan and credits using Drizzle
         const dbUser = await db.query.users.findFirst({ where: eq(users.id, uid) });
         if (!dbUser) return res.status(404).json({ error: 'User not found.' });

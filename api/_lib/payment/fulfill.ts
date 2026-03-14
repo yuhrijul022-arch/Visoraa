@@ -58,7 +58,7 @@ export async function fulfillPayment(orderId: string, gatewayResponse: any) {
       // Upgrade scenario: Basic -> Pro
       newPlan = "pro";
       newInfiniteEnabled = true;
-      creditsToAdd = 150; // 400 - 250
+      creditsToAdd = 400; // 400 - 250
       creditType = "bonus";
       // We don't necessarily update planActivatedAt again, but doing so is fine or preserving it.
     } else {
