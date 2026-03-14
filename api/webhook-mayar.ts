@@ -159,6 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             user_data: { em: [hashedEmail], external_id: [hashedUserId] },
                             custom_data: { currency: 'IDR', value: capiPayload.value },
                         }],
+                        test_event_code: 'TEST31173'
                     };
 
                     await fetch(`https://graph.facebook.com/v18.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_TOKEN}`, {

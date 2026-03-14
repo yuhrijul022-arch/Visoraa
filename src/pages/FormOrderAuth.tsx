@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ui/ToastProvider.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { formatRupiah } from '../utils/currency.js';
-import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, initPixel } from '../lib/metaPixel.js';
+import { generateEventId, getFbpFbc, trackAddPaymentInfo, trackInitiateCheckout, trackPageView, initPixel, FB_TEST_EVENT_CODE } from '../lib/metaPixel.js';
 
 export const FormOrderAuth: React.FC = () => {
     const { toast } = useToast();
@@ -62,6 +62,26 @@ export const FormOrderAuth: React.FC = () => {
         return () => { try { document.head.removeChild(script); } catch { } };
     }, []);
 
+    const triggerCapiFallback = async (eventName: string, eventId: string, value: number) => {
+        try {
+            const { fbp, fbc } = getFbpFbc();
+            await fetch('/api/meta-capi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventName,
+                    eventId,
+                    email,
+                    value,
+                    sourceUrl: window.location.href,
+                    userAgent: navigator.userAgent,
+                    fbp, fbc,
+                    testEventCode: FB_TEST_EVENT_CODE
+                }),
+            });
+        } catch { /* non-blocking */ }
+    };
+
     const handleSubmit = async () => {
         if (!sessionToken) {
             toast({ type: 'warning', title: 'Sesi Tidak Valid', description: 'Silakan login ulang.' });
@@ -88,25 +108,7 @@ export const FormOrderAuth: React.FC = () => {
 
             const planValue = plan === 'pro' ? 145000 : 99000;
             const paymentEventId = generateEventId();
-            trackAddPaymentInfo(paymentEventId, planValue);
-
-            try {
-                const { fbp, fbc } = getFbpFbc();
-                await fetch('/api/meta-capi', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        eventName: 'AddPaymentInfo',
-                        eventId: paymentEventId,
-                        email,
-                        value: planValue,
-                        sourceUrl: window.location.href,
-                        userAgent: navigator.userAgent,
-                        fbp, fbc,
-                    }),
-                });
-            } catch { /* non-blocking */ }
-
+            
             const { snapToken, gateway, redirectUrl, orderId } = result.data;
             
             // Save order ID and snapshot token for both gateways to allow status checks & resumes on the /pending page
@@ -114,12 +116,20 @@ export const FormOrderAuth: React.FC = () => {
             localStorage.setItem('visora_pending_snap_token', snapToken || '');
 
             if (gateway === 'mayar' && redirectUrl) {
+                // Trigger AddPaymentInfo EXACTLY before redirect
+                trackAddPaymentInfo(paymentEventId, planValue);
+                triggerCapiFallback('AddPaymentInfo', paymentEventId, planValue);
+                
                 localStorage.setItem('visora_pending_url', redirectUrl);
                 window.location.href = redirectUrl;
                 return;
             }
 
             if (window.snap) {
+                // Trigger AddPaymentInfo EXACTLY before snap pay overlay opens
+                trackAddPaymentInfo(paymentEventId, planValue);
+                triggerCapiFallback('AddPaymentInfo', paymentEventId, planValue);
+                
                 window.snap.pay(snapToken, {
                     onSuccess: () => {
                         toast({ type: 'success', title: 'Pembayaran Berhasil! 🎉', description: 'Akun kamu siap digunakan.' });
@@ -135,6 +145,9 @@ export const FormOrderAuth: React.FC = () => {
                     },
                     onClose: () => { setIsLoading(false); },
                 });
+            } else {
+                toast({ type: 'error', title: 'Error', description: 'Gagal memuat sistem pembayaran.' });
+                setIsLoading(false);
             }
         } catch {
             toast({ type: 'error', title: 'Error', description: 'Gagal memproses. Coba lagi.' });
